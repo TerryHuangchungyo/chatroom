@@ -20,10 +20,6 @@
                 <h5 class="p-2">聊天室列表</h5>
                 <div class="mt-2">
                     <div class="nav flex-column nav-pills" id="hubList" role="tablist" aria-orientation="vertical">
-                        <a class="nav-link active">神秘小房間</a>
-                        <a class="nav-link">小房間2</a>
-                        <a class="nav-link">小房間3</a>
-                        <a class="nav-link">小房間4</a>
                     </div>                    
                 </div>
             </div>
@@ -31,8 +27,8 @@
                 <div class="container vh-100">
                     <div class="rounded container my-2 h-100">
                         <div class="mt-3">
-                            <h2>神秘小房間</h2>
-                            <small>00000000001</small>
+                            <h2 id="hubName">尚未擁有房間</h2>
+                            <small>房間編號: <span id="hubId">xxxxxxxxxx</span></small>
                         </div>
                         <div id="dialog" class="rounded bg-light h-75 bg-white">
                             <div class="ml-2 mt-2">
@@ -129,6 +125,7 @@
         <script>
             var userId;
             var hubs = new Map();
+            var lastHubListItem;
 
             $(document).ready(function(){
                 $("#usernameSettingModal").show();
@@ -173,7 +170,7 @@
                 }).then( function( data ){
                     let hubId = data["id"];
                     hubs.set( hubId, data["hubname"])
-                    $("<a></a>").addClass( "nav-link")
+                    updateHubList( hubId )
                     alert("創建聊天室成功");
                 }).fail( function( data ){
                     alert("創建聊天室失敗");
@@ -182,11 +179,25 @@
                 $("#hubnameSettingModal").hide();
             }
 
-            function updateHubList( hubId = null ) {
+            function updateHubList( hubId = 0 ) {
                 $("#hubList").empty()
-                for( let [ k, v ] of hubs.entries() ) {
+                for( let [ id, name ] of hubs.entries() ) {
                     let list = $("<a></a>").addClass( "nav-link" )
-                                        
+                    list.data( "id", id )
+                    list.text( name )
+                    list.appendTo( "#hubList" )  
+                    if( hubId == id ) {
+                        list.addClass("active")
+                        lastHubListItem = list
+                        $("#hubName").text( lastHubListItem.text() )
+                        $("#hubId").text( String(lastHubListItem.data("id")).padStart( 12, "0") )
+                    }
+                    list.click( function(){
+                        lastHubListItem.removeClass( "active" )
+                        $(this).addClass("active")
+                        lastHubListItem = $(this)
+                        console.log( lastHubListItem.data( "id") )
+                    })                
                 }
             }
         </script>
