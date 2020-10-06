@@ -1,5 +1,5 @@
 bin/*
 pkg/*
-src/go.sum
+**/go.sum
 *.DS_Store
 .vscode/*

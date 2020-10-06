@@ -1,20 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+	
+	"local/wsservice"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "Usage: %s host:port", os.Args[0])
-		os.Exit(1)
-	}
-	address := os.Args[1]
-
 	// 初始化一個http服務
 	router := gin.Default()
 
@@ -26,11 +20,17 @@ func main() {
 		context.HTML(http.StatusOK, "index.html", nil)
 	})
 
-	// socket服務
-	router.GET("/chatroom/:id", func(context *gin.Context) {
-		hubId := context.Param("id")
-		wsserve
+	// 新增聊天室
+	router.POST( "/chatroom", func( context *gin.Context ) {
+		name := context.PostForm( "hubname" )
+		wsservice.CreateHub( name )
 	})
 
-	router.Run(address)
+	// 新增使用者
+	router.POST("/user", func(context *gin.Context) {
+		name := context.PostForm("username")
+		wsservice.CreateClient(name)
+	})
+
+	router.Run(":8080")
 }
