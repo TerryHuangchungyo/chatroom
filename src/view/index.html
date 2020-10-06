@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>聊聊</title>
+        <title>WeeTalk</title>
         <script
             src="https://code.jquery.com/jquery-3.5.1.js"
             integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
@@ -15,11 +15,11 @@
         <div class="row">
             <div class="col-2 py-2 bg-white">
                 <div>
-                    <button type="button" class="float-right btn btn-info">創建聊天室</button>
+                    <button id="createHubBtn" type="button" class="float-right btn btn-info">創建聊天室</button>
                 </div>
                 <h5 class="p-2">聊天室列表</h5>
-                <div id="chatroomList" class="mt-2">
-                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <div class="mt-2">
+                    <div class="nav flex-column nav-pills" id="hubList" role="tablist" aria-orientation="vertical">
                         <a class="nav-link active">神秘小房間</a>
                         <a class="nav-link">小房間2</a>
                         <a class="nav-link">小房間3</a>
@@ -35,13 +35,13 @@
                             <small>00000000001</small>
                         </div>
                         <div id="dialog" class="rounded bg-light h-75 bg-white">
-                            <div class="ml-1 mt-2">
+                            <div class="ml-2 mt-2">
                                 <small>Terry 2020/09/21 20:01</small>
                                 <div>
                                     : Good Morning!
                                 </div>
                             </div>
-                            <div class="ml-1 mt-2">
+                            <div class="ml-2 mt-2">
                                 <small>寂寞小水怪 2020/09/22 20:01</small>
                                 <div>
                                     : 早安
@@ -55,9 +55,12 @@
                             </div>
                         </div>
                         <div class="my-3">
+                            使用者: <span id="username"></span>
+                        </div>
+                        <div class="my-3">
                             <form>
                                 <div class="row">
-                                    <div class="col-11">
+                                    <div class="col-10">
                                         <input type="text" class="form-control" id="msgInput" placeholder="請輸入訊息">
                                     </div>
                                     <div>
@@ -74,7 +77,8 @@
                     <button type="button" class="float-right btn btn-success">邀請</button>
                 </div>
                 <h5 class="pt-2">聊天室成員</h5>
-                <div id="chatroomList" class="mt-4">
+                <div>聊天室人數: <span>5</span>人</div>
+                <div id="userList" class="mt-4">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">寂寞小水怪</li>
                         <li class="list-group-item">Terry</li>
@@ -84,7 +88,7 @@
                       </ul>                   
                 </div>
             </div>
-            <div id="modal" class="modal" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-hidden="true">
+            <div id="usernameSettingModal" class="modal" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -92,25 +96,58 @@
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <input type="text" class="form-control" id="username">
+                            <input type="text" class="form-control" id="usernameInput">
                         </div>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" id="commit">確認</button>
+                      <button type="button" class="btn btn-primary" id="usernameCommit">確認</button>
                     </div>
                   </div>
                 </div>
-              </div> 
+            </div>
+            <div id="hubnameSettingModal" class="modal" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">請輸入聊天室名稱</h5>
+                      <button type="button" class="close" data-dismiss="hubnameSettingModal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="hubnameInput">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" id="hubnameCommit">確認</button>
+                    </div>
+                  </div>
+                </div>
+            </div>
         </div>
         <script>
-            $(document).ready(function(){
-                $("#modal").show();
+            var userId;
+            var hubs = new Map();
 
-                $("#commit").click( function(){
-                    $("#modal").hide();
-                    createUser( $("#username").val() )
-                    console.log( $("#username").val() );
+            $(document).ready(function(){
+                $("#usernameSettingModal").show();
+
+
+                $("#usernameCommit").click( function(){
+                    $("#usernameSettingModal").hide();
+                    createUser( $("#usernameInput").val() )
+                    console.log( $("#usernameInput").val() );
+                });
+
+                $("#createHubBtn").click( function() {
+                    $("#hubnameSettingModal").show();
                 })
+                
+                $("#hubnameCommit").click( function(){
+                    $("#hubnameSettingModal").hide();
+                    createHub( $("#hubnameInput").val() )
+                });
             });
 
             function createUser( username ) {
@@ -118,12 +155,39 @@
                     type: "POST",
                     url: "http://localhost:8080/user",
                     data: { username: username }
-                }).then( function(){
-                    alert("創建成功");
-                }).fail( function(){
-                    alert("創建失敗");
+                }).then( function( data ){
+                    userId = data["id"];
+                    $("#username").text( data["username"] );
+                    alert("創建使用者成功");
+                }).fail( function( data ){
+                    alert("創建使用者失敗");
                 })
-                $("#modal").hide();
+                $("#usernameSettingModal").hide();
+            }
+
+            function createHub( hubname ) {
+                $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8080/hub",
+                    data: { userId: userId, hubname: hubname }
+                }).then( function( data ){
+                    let hubId = data["id"];
+                    hubs.set( hubId, data["hubname"])
+                    $("<a></a>").addClass( "nav-link")
+                    alert("創建聊天室成功");
+                }).fail( function( data ){
+                    alert("創建聊天室失敗");
+                })
+                $("#hubnameInput").val("");
+                $("#hubnameSettingModal").hide();
+            }
+
+            function updateHubList( hubId = null ) {
+                $("#hubList").empty()
+                for( let [ k, v ] of hubs.entries() ) {
+                    let list = $("<a></a>").addClass( "nav-link" )
+                                        
+                }
             }
         </script>
     </body>

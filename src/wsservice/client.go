@@ -3,5 +3,5 @@ package wsservice
 type Client struct {
 	Id   uint32
 	Name string
-	Hubs []uint32
+	Hubs map[uint32]bool
 }
