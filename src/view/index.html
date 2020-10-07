@@ -53,7 +53,7 @@
             </div>
             <div class="col-2 py-2 bg-white">
                 <div>
-                    <button type="button" class="float-right btn btn-success">邀請</button>
+                    <button id="inviteBtn" type="button" class="float-right btn btn-success">邀請</button>
                 </div>
                 <h5 class="pt-2">聊天室成員</h5>
                 <div>聊天室人數: <span>5</span>人</div>
@@ -84,12 +84,12 @@
                   </div>
                 </div>
             </div>
-            <div id="hubnameSettingModal" class="modal" tabindex="-1" data-backdrop="static" data-keyboard="false" aria-hidden="true">
+            <div id="hubnameSettingModal" class="modal" tabindex="-1"  aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title">請輸入聊天室名稱</h5>
-                      <button type="button" class="close" data-dismiss="hubnameSettingModal" aria-label="Close">
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                       </button>
                     </div>
@@ -100,6 +100,26 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-primary" id="hubnameCommit">確認</button>
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <div id="inviteModal" class="modal" tabindex="-1"  aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">請輸入要邀請的使用者ID</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="inviteInput">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" id="inviteCommit">確認</button>
                     </div>
                   </div>
                 </div>
@@ -143,6 +163,21 @@
                 $("#hubnameCommit").click( function(){
                     $("#hubnameSettingModal").hide();
                     createHub( $("#hubnameInput").val() )
+                });
+
+                $("#inviteBtn").click( function() {
+                    $("#inviteModal").show();
+                });
+
+                $("#inviteCommit").click( function(){
+                    let message = { action: INVITE,
+                                    userId: parseInt($("#inviteInput").val()),
+                                    userName: "",
+                                    hubId: lastHubListItem.data("id"),
+                                    hubName: "",
+                                    content: "" };
+                    conn.send( JSON.stringify(message) );
+                    $("#inviteModal").hide();
                 });
 
                 $("#msgForm").submit( function( event ) {
@@ -195,22 +230,16 @@
                         appendMessage( type, message.userName, msgCurrentTimeStr(), message.content );
                         break;
                     case INVITE:
-                        // let replymessage = { action: ANSWER,
-                        //         userId: userId,
-                        //         userName: "",
-                        //         hubId: message.hubId,
-                        //         hubName: "",
-                        //         content: "1" };
-                        // if( window.confirm( `${message.UserName} 邀請你加入 ${message.HubName} 聊天室`) ) {
-                            
-                        // } else {
-                        //     let message = { action: 0,
-                        //     userId: userId,
-                        //     userName: "",
-                        //     hubId: lastHubListItem.data("id"),
-                        //     hubName: "",
-                        //     content: "0" };
-                        // }
+                        let replyMessage = { action: ANSWER,
+                                            userId: userId,
+                                            userName: "",
+                                            hubId: message.hubId,
+                                            hubName: "",
+                                            content: "1" };
+                        console.log( replyMessage );
+                        conn.send( JSON.stringify(replyMessage) );
+                        hubs.set( message.hubId, message.hubName);
+                        updateHubList( message.hubId );
                         break;
                 }
             }
@@ -267,7 +296,6 @@
                         lastHubListItem = $(this)
                         $("#hubName").text( lastHubListItem.text() )
                         $("#hubId").text( String(lastHubListItem.data("id")).padStart( 12, "0") )
-                        console.log( lastHubListItem.data( "id") )
                     })                
                 }
             }

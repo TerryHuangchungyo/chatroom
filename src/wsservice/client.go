@@ -2,6 +2,7 @@ package wsservice
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -43,6 +44,7 @@ func (c *Client) ReadPump() {
 
 		var m Message
 		json.Unmarshal(message, &m)
+		fmt.Printf("%s get message %v\n", c.Name, m)
 		go c.HandleAction(&m)
 	}
 }
@@ -87,11 +89,13 @@ func (c *Client) HandleAction(message *Message) {
 			hubs[message.HubId].Broadcast <- *message
 		}
 	case INVITE:
-		client := message.UserId
+		clientId := message.UserId
 		message.UserId = c.Id // 將被邀請人改成邀請人
+		message.UserName = c.Name
+		message.HubName = hubs[message.HubId].Name
 
-		hubs[message.HubId].Inviting[client] = true // 被邀請人邀請中
-		clients[client].send <- *message
+		hubs[message.HubId].Inviting[clientId] = true // 被邀請人邀請中
+		clients[clientId].send <- *message
 	case ANSWER:
 		if hubs[message.HubId].Inviting[message.UserId] { // 答覆的人的確在聊天室邀請中
 			answer, err := strconv.ParseUint(message.Content, 10, 32)

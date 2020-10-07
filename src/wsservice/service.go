@@ -62,6 +62,7 @@ func ServeWs(w http.ResponseWriter, r *http.Request, id uint32) {
 
 	client := clients[id]
 	client.conn = conn
+
 	go client.ReadPump()
 	go client.WritePump()
 }
@@ -85,6 +86,7 @@ func CreateHub(hubname string, creater uint32) (*Hub, error) {
 	hub := &Hub{Id: hubId,
 		Name:      hubname,
 		Clients:   make(map[uint32]bool),
+		Inviting:  make(map[uint32]bool),
 		Register:  make(chan uint32),
 		Broadcast: make(chan Message),
 	}
