@@ -25,12 +25,18 @@
             </div>
             <div class="col-8">
                 <div class="container vh-100">
-                    <div class="rounded container my-2 h-100">
+                    <div class="rounded my-2 h-100">
                         <div class="mt-3">
                             <h2 id="hubName">尚未擁有房間</h2>
                             <small>房間編號: <span id="hubId">xxxxxxxxxx</span></small>
                         </div>
                         <div id="dialog" class="rounded bg-light h-75 bg-white">
+                            <div class="mt-2 bg-info">
+                                <small>系統訊息 2020/09/21 20:01</small>
+                                <div>
+                                    聊天室通道關閉
+                                </div>
+                            </div>
                             <div class="ml-2 mt-2">
                                 <small>Terry 2020/09/21 20:01</small>
                                 <div>
@@ -54,7 +60,7 @@
                             使用者: <span id="username"></span>
                         </div>
                         <div class="my-3">
-                            <form>
+                            <form id="msgForm">
                                 <div class="row">
                                     <div class="col-10">
                                         <input type="text" class="form-control" id="msgInput" placeholder="請輸入訊息">
@@ -123,11 +129,21 @@
             </div>
         </div>
         <script>
+            const SYSTEM = Symbol( "system" );
+            const USER = Symbol( "user")
+            const OTHER = Symbol( "other" );
+
+            var conn;
             var userId;
             var hubs = new Map();
             var lastHubListItem;
 
+            window.onbeforeunload = function () {
+                conn.close(1000);
+            };
+
             $(document).ready(function(){
+
                 $("#usernameSettingModal").show();
 
 
@@ -145,16 +161,42 @@
                     $("#hubnameSettingModal").hide();
                     createHub( $("#hubnameInput").val() )
                 });
+
+                $("#msgForm").submit( function( event ) {
+                    if( !conn ) {
+                        alert("聊天室沒有連線")
+                        return false;
+                    }
+
+                    if( $("#msgInput").val() ) {
+                        conn.send( $("#msgInput").val() );
+                        $("#msgInput").val("");
+                    }
+                    return false;
+                });
             });
+
+            function createConn( userId ) {
+                if ( window["WebSocket"] ) {
+                    conn = new WebSocket( "ws://" + document.location.host + "/chat/" + userId );
+                    conn.onclose = function( event ) {
+                        appendMessage( SYSTEM, "系統訊息", msgCurrentTimeStr(), "聊天通道關閉" );
+                    };
+
+                } else {
+                    appendMessage( SYSTEM, "系統訊息", msgCurrentTimeStr(), "你的聊天室不支援websocket" );                         
+                }
+            }
 
             function createUser( username ) {
                 $.ajax({
                     type: "POST",
-                    url: "http://localhost:8080/user",
+                    url: document.location.protocol + "//" + document.location.host + "/user",
                     data: { username: username }
                 }).then( function( data ){
                     userId = data["id"];
                     $("#username").text( data["username"] );
+                    createConn( userId )
                     alert("創建使用者成功");
                 }).fail( function( data ){
                     alert("創建使用者失敗");
@@ -165,7 +207,7 @@
             function createHub( hubname ) {
                 $.ajax({
                     type: "POST",
-                    url: "http://localhost:8080/hub",
+                    url: document.location.protocol + "//" + document.location.host + "/hub",
                     data: { userId: userId, hubname: hubname }
                 }).then( function( data ){
                     let hubId = data["id"];
@@ -199,6 +241,33 @@
                         console.log( lastHubListItem.data( "id") )
                     })                
                 }
+            }
+
+             
+            function appendMessage( type, name, time, msg ) {
+                let messageBox = $("<div></div>").addClass("mt-2");
+
+                switch( type ) {
+                    case SYSTEM:
+                        messageBox.addClass("bg-info");
+                        break;
+                    case USER:
+                        messageBox.addClass("mr-2")
+                                  .addClass("float-right");
+                        break;
+                    case OTHER:
+                        messageBox.addClass("ml-2");
+                        break;
+                }
+                
+                messageBox.html( `<small>${name} ${time}</small><div>${msg}</div>`);
+                messageBox.appendTo($("#dialog"))
+            }
+
+            function msgCurrentTimeStr() {
+                let str = (new Date()).toISOString().replaceAll("-","/").replace("T", " ");
+                str.substr( 0, str.lastIndexOf( ":" ) );
+                return str;
             }
         </script>
     </body>
