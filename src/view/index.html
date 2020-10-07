@@ -30,31 +30,8 @@
                             <h2 id="hubName">尚未擁有房間</h2>
                             <small>房間編號: <span id="hubId">xxxxxxxxxx</span></small>
                         </div>
-                        <div id="dialog" class="rounded bg-light h-75 bg-white">
-                            <div class="mt-2 bg-info">
-                                <small>系統訊息 2020/09/21 20:01</small>
-                                <div>
-                                    聊天室通道關閉
-                                </div>
-                            </div>
-                            <div class="ml-2 mt-2">
-                                <small>Terry 2020/09/21 20:01</small>
-                                <div>
-                                    : Good Morning!
-                                </div>
-                            </div>
-                            <div class="ml-2 mt-2">
-                                <small>寂寞小水怪 2020/09/22 20:01</small>
-                                <div>
-                                    : 早安
-                                </div>
-                            </div>
-                            <div class="mr-2 mt-2 float-right">
-                                <small>你 2020/09/22 20:02</small>
-                                <div>
-                                    > 今天吃什麼？
-                                </div>
-                            </div>
+                        <div id="dialog" class="container rounded bg-light h-75 bg-white">
+                            
                         </div>
                         <div class="my-3">
                             使用者: <span id="username"></span>
@@ -129,6 +106,12 @@
             </div>
         </div>
         <script>
+            const SEND   = 0 // 傳送訊息到聊天室
+            const REPLY  = 1 // 聊天室訊息回覆
+            const INVITE = 2 // 邀請加入聊天室
+            const ANSWER = 3 // 答覆聊天室邀請
+
+            // 訊息框的分類
             const SYSTEM = Symbol( "system" );
             const USER = Symbol( "user")
             const OTHER = Symbol( "other" );
@@ -169,7 +152,13 @@
                     }
 
                     if( $("#msgInput").val() ) {
-                        conn.send( $("#msgInput").val() );
+                        let message = { action: 0,
+                            userId: userId,
+                            userName: "",
+                            hubId: lastHubListItem.data("id"),
+                            hubName: "",
+                            content: $("#msgInput").val() };
+                        conn.send( JSON.stringify( message ) );
                         $("#msgInput").val("");
                     }
                     return false;
@@ -179,12 +168,50 @@
             function createConn( userId ) {
                 if ( window["WebSocket"] ) {
                     conn = new WebSocket( "ws://" + document.location.host + "/chat/" + userId );
+
                     conn.onclose = function( event ) {
                         appendMessage( SYSTEM, "系統訊息", msgCurrentTimeStr(), "聊天通道關閉" );
                     };
 
+                    conn.onmessage = function( event ) {
+                        var message = JSON.parse(event.data);
+                        console.log( message );
+                        handleMessage( message );
+                    }
+
+                    appendMessage( SYSTEM, "系統訊息", msgCurrentTimeStr(), "聊天通道開啟" );
                 } else {
                     appendMessage( SYSTEM, "系統訊息", msgCurrentTimeStr(), "你的聊天室不支援websocket" );                         
+                }
+            }
+
+            function handleMessage( message ) {
+                switch( message.action ) {
+                    case REPLY:
+                        let type = OTHER;
+                        if( message.userId == userId ) {
+                            type = USER;
+                        }
+                        appendMessage( type, message.userName, msgCurrentTimeStr(), message.content );
+                        break;
+                    case INVITE:
+                        // let replymessage = { action: ANSWER,
+                        //         userId: userId,
+                        //         userName: "",
+                        //         hubId: message.hubId,
+                        //         hubName: "",
+                        //         content: "1" };
+                        // if( window.confirm( `${message.UserName} 邀請你加入 ${message.HubName} 聊天室`) ) {
+                            
+                        // } else {
+                        //     let message = { action: 0,
+                        //     userId: userId,
+                        //     userName: "",
+                        //     hubId: lastHubListItem.data("id"),
+                        //     hubName: "",
+                        //     content: "0" };
+                        // }
+                        break;
                 }
             }
 
@@ -213,9 +240,9 @@
                     let hubId = data["id"];
                     hubs.set( hubId, data["hubname"])
                     updateHubList( hubId )
-                    alert("創建聊天室成功");
+                    console.log("創建聊天室成功");
                 }).fail( function( data ){
-                    alert("創建聊天室失敗");
+                    console.log("創建聊天室失敗");
                 })
                 $("#hubnameInput").val("");
                 $("#hubnameSettingModal").hide();
@@ -238,6 +265,8 @@
                         lastHubListItem.removeClass( "active" )
                         $(this).addClass("active")
                         lastHubListItem = $(this)
+                        $("#hubName").text( lastHubListItem.text() )
+                        $("#hubId").text( String(lastHubListItem.data("id")).padStart( 12, "0") )
                         console.log( lastHubListItem.data( "id") )
                     })                
                 }
@@ -245,28 +274,35 @@
 
              
             function appendMessage( type, name, time, msg ) {
-                let messageBox = $("<div></div>").addClass("mt-2");
+                let messageBox = $("<div></div>").addClass("bg-light");
 
                 switch( type ) {
                     case SYSTEM:
-                        messageBox.addClass("bg-info");
-                        break;
-                    case USER:
-                        messageBox.addClass("mr-2")
-                                  .addClass("float-right");
+                        messageBox.addClass("offset-4")
+                                .addClass("col-4")
+                                .addClass("rounded")
+                                .addClass("mt-2");
                         break;
                     case OTHER:
-                        messageBox.addClass("ml-2");
+                        messageBox.addClass("col-4");
+                        break;
+                    case USER:
+                        messageBox.addClass("offset-8")
+                                .addClass("col-4");
                         break;
                 }
                 
                 messageBox.html( `<small>${name} ${time}</small><div>${msg}</div>`);
-                messageBox.appendTo($("#dialog"))
+
+                let wrapper = $("<div></div>").addClass("row")
+                                            .addClass("mt-2")
+                                            .append( messageBox );
+                wrapper.appendTo($("#dialog"))
             }
 
             function msgCurrentTimeStr() {
                 let str = (new Date()).toISOString().replaceAll("-","/").replace("T", " ");
-                str.substr( 0, str.lastIndexOf( ":" ) );
+                str = str.substr( 0, str.lastIndexOf( ":" ) );
                 return str;
             }
         </script>

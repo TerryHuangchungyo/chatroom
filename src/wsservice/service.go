@@ -10,6 +10,13 @@ import (
 )
 
 const (
+	SEND   = iota // 傳送訊息到聊天室
+	REPLY         // 聊天室訊息回覆
+	INVITE        // 邀請加入聊天室
+	ANSWER        // 答覆聊天室邀請
+)
+
+const (
 	// 寫訊息容許等待的時間，取決於網路狀況
 	writeWait = 10 * time.Second
 
@@ -56,13 +63,14 @@ func ServeWs(w http.ResponseWriter, r *http.Request, id uint32) {
 	client := clients[id]
 	client.conn = conn
 	go client.ReadPump()
+	go client.WritePump()
 }
 
 /***
  * 創造使用者
  */
 func CreateClient(name string) (*Client, error) {
-	client := &Client{Id: userId, Name: name, Hubs: make(map[uint32]bool)}
+	client := &Client{Id: userId, Name: name, Hubs: make(map[uint32]bool), send: make(chan Message, 256)}
 	clients = append(clients, client)
 	userId++
 	fmt.Printf("New User %d %s Created", client.Id, client.Name)
@@ -74,10 +82,16 @@ func CreateClient(name string) (*Client, error) {
  * 創造聊天室
  */
 func CreateHub(hubname string, creater uint32) (*Hub, error) {
-	hub := &Hub{Id: hubId, Name: hubname, Clients: make(map[uint32]bool)}
+	hub := &Hub{Id: hubId,
+		Name:      hubname,
+		Clients:   make(map[uint32]bool),
+		Register:  make(chan uint32),
+		Broadcast: make(chan Message),
+	}
 
 	hub.Clients[creater] = true
 	clients[creater].Hubs[hub.Id] = true
+	go hub.run()
 
 	hubs = append(hubs, hub)
 	hubId++
