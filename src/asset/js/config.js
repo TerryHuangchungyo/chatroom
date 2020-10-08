@@ -5,6 +5,6 @@ const INVITE = 2 // 邀請加入聊天室
 const ANSWER = 3 // 答覆聊天室邀請
 
 // 訊息框的分類
-const SYSTEM = Symbol( "system" );
+const BROADCAST = Symbol( "system" );
 const USER = Symbol( "user")
 const OTHER = Symbol( "other" );

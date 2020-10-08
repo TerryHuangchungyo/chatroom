@@ -2,7 +2,6 @@ package wsservice
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -11,20 +10,20 @@ import (
 )
 
 type Message struct {
-	Action   uint32 `json:"action"`
-	UserId   uint32 `json:"userId"`
-	UserName string `json:"userName"`
-	HubId    uint32 `json:"hubId"`
-	HubName  string `json:"hubName"`
-	Content  string `json:"content"`
+	Action   uint32 `json:"action"`   // 動作
+	UserId   uint32 `json:"userId"`   // 使用者帳號
+	UserName string `json:"userName"` // 使用者名稱
+	HubId    uint32 `json:"hubId"`    // 聊天室ID
+	HubName  string `json:"hubName"`  // 聊天室名稱
+	Content  string `json:"content"`  // 訊息內容
 }
 
 type Client struct {
-	id   uint32
-	name string
-	hubs map[uint32]bool
-	conn *websocket.Conn
-	send chan Message
+	id   uint32          // 使用者ID
+	name string          // 使用者名稱
+	hubs map[uint32]bool // 使用者擁有的聊天室
+	conn *websocket.Conn // 使用者所使用的websocket連線
+	send chan Message    // 要送給使用者的訊息
 }
 
 func (c *Client) GetId() uint32 {
@@ -35,6 +34,10 @@ func (c *Client) GetName() string {
 	return c.name
 }
 
+/***
+ * 從Websocket客戶端讀取訊息，並將原始JSON格式的資料解析後，
+ * 交由HandleAction函式來處理後續動作
+ */
 func (c *Client) ReadPump() {
 	defer func() {
 		c.conn.Close()
@@ -52,11 +55,14 @@ func (c *Client) ReadPump() {
 
 		var m Message
 		json.Unmarshal(message, &m)
-		fmt.Printf("%s get message %v\n", c.name, m)
+		//fmt.Printf("%s get message %v\n", c.name, m)
 		go c.HandleAction(&m)
 	}
 }
 
+/***
+ * 從send中拿取message，使用將資料封裝成JSON格式後，傳輸給websocket客戶端
+ */
 func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -90,6 +96,9 @@ func (c *Client) WritePump() {
 	}
 }
 
+/***
+ * 根據message的action code來處理封包
+ */
 func (c *Client) HandleAction(message *Message) {
 	switch message.Action {
 	case SEND: // 傳送訊息到聊天室

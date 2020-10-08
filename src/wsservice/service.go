@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	SEND   = iota // 傳送訊息到聊天室
-	REPLY         // 聊天室訊息回覆
-	INVITE        // 邀請加入聊天室
-	ANSWER        // 答覆聊天室邀請
+	SEND      = iota // 傳送訊息到聊天室
+	REPLY            // 聊天室訊息回覆
+	INVITE           // 邀請加入聊天室
+	ANSWER           // 答覆聊天室邀請
+	BROADCAST        // 系統廣播
 )
 
 const (

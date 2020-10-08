@@ -2,7 +2,7 @@ class Hub {
     constructor( id, name ) {
         this.id = id;
         this.name = name;
-        let dialog = $("<div style='overflow:scroll;' class='p-2 rounded bg-white h-100'></div>");
+        let dialog = $("<div style='overflow-y:auto;' class='p-2 rounded bg-white h-100'></div>");
         this.dialog = dialog;
     }
 

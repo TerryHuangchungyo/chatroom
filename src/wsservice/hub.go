@@ -5,12 +5,12 @@ import (
 )
 
 type Hub struct {
-	id        uint32
-	name      string
-	clients   map[uint32]bool
-	inviting  map[uint32]bool
-	register  chan uint32
-	broadcast chan Message
+	id        uint32          // 聊天室Id
+	name      string          // 聊天室名稱
+	clients   map[uint32]bool // 聊天室有的使用者
+	inviting  map[uint32]bool // 正在邀請的使用者
+	register  chan uint32     // 等待註冊的使用者
+	broadcast chan Message    // 廣播，訊息會發給所有使用者
 }
 
 func (h *Hub) GetId() uint32 {
@@ -21,6 +21,11 @@ func (h *Hub) GetName() string {
 	return h.name
 }
 
+/***
+ * 運行聊天室，主要的工作有
+ * 1. 加入使用者
+ * 2. 轉發廣播的訊息給所有使用者
+ */
 func (h *Hub) run() {
 	fmt.Println("Hub " + h.name + " is running")
 	for {

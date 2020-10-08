@@ -58,7 +58,7 @@ function createConn( userId ) {
 
         conn.onclose = function( event ) {
             for( let [ id, hub ] of hubs.entries() ) {
-                hub.appendMessage( SYSTEM, "系統訊息", msgCurrentTimeStr(), "聊天通道關閉" );         
+                hub.appendMessage( BROADCAST, "系統訊息", msgCurrentTimeStr(), "聊天通道關閉" );         
             }
         };
 
@@ -189,7 +189,7 @@ function appendMessage( type, name, time, msg ) {
     let messageBox = $("<div></div>").addClass("bg-light");
 
     switch( type ) {
-        case SYSTEM:
+        case BROADCAST:
             messageBox.addClass("offset-4")
                     .addClass("col-4")
                     .addClass("rounded")
