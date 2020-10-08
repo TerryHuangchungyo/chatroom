@@ -7,6 +7,8 @@
             src="https://code.jquery.com/jquery-3.5.1.js"
             integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
             crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
@@ -15,7 +17,7 @@
         <div class="row">
             <div class="col-2 py-2 bg-white">
                 <div>
-                    <button id="createHubBtn" type="button" class="float-right btn btn-info">創建聊天室</button>
+                    <button data-toggle="modal" data-target="#hubnameSettingModal" type="button" class="float-right btn btn-info">創建聊天室</button>
                 </div>
                 <h5 class="p-2">聊天室列表</h5>
                 <div class="mt-2">
@@ -53,7 +55,7 @@
             </div>
             <div class="col-2 py-2 bg-white">
                 <div>
-                    <button id="inviteBtn" type="button" class="float-right btn btn-success">邀請</button>
+                    <button data-toggle="modal" data-target="#inviteModal" type="button" class="float-right btn btn-success">邀請</button>
                 </div>
                 <h5 class="pt-2">聊天室成員</h5>
                 <div>聊天室人數: <span>5</span>人</div>
@@ -84,7 +86,7 @@
                   </div>
                 </div>
             </div>
-            <div id="hubnameSettingModal" class="modal" tabindex="-1"  aria-hidden="true">
+            <div id="hubnameSettingModal" class="modal fade" tabindex="-1"  aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -104,7 +106,7 @@
                   </div>
                 </div>
             </div>
-            <div id="inviteModal" class="modal" tabindex="-1"  aria-hidden="true">
+            <div id="inviteModal" class="modal fade" tabindex="-1"  aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -147,7 +149,7 @@
 
             $(document).ready(function(){
 
-                $("#usernameSettingModal").show();
+                $("#usernameSettingModal").modal("show");
 
 
                 $("#usernameCommit").click( function(){
@@ -155,18 +157,10 @@
                     createUser( $("#usernameInput").val() )
                     console.log( $("#usernameInput").val() );
                 });
-
-                $("#createHubBtn").click( function() {
-                    $("#hubnameSettingModal").show();
-                })
                 
                 $("#hubnameCommit").click( function(){
                     $("#hubnameSettingModal").hide();
                     createHub( $("#hubnameInput").val() )
-                });
-
-                $("#inviteBtn").click( function() {
-                    $("#inviteModal").show();
                 });
 
                 $("#inviteCommit").click( function(){
@@ -177,7 +171,7 @@
                                     hubName: "",
                                     content: "" };
                     conn.send( JSON.stringify(message) );
-                    $("#inviteModal").hide();
+                    $("#inviteModal").modal("hide");
                 });
 
                 $("#msgForm").submit( function( event ) {
@@ -232,14 +226,34 @@
                     case INVITE:
                         let replyMessage = { action: ANSWER,
                                             userId: userId,
-                                            userName: "",
+                                           userName: "",
                                             hubId: message.hubId,
                                             hubName: "",
-                                            content: "1" };
-                        console.log( replyMessage );
-                        conn.send( JSON.stringify(replyMessage) );
-                        hubs.set( message.hubId, message.hubName);
-                        updateHubList( message.hubId );
+                                            content: "0" };
+                        
+                        $.confirm({
+                            title: '聊天室邀請',
+                            content: `${message.userName} 邀請你加入 ${message.hubName} 聊天室`,
+                            buttons: {
+                                confirm: {
+                                    text: '是',
+                                    btnClass: 'btn-green',
+                                    keys: ['enter'],
+                                    action: function() {
+                                        replyMessage.content = "1";
+                                        hubs.set( message.hubId, message.hubName);
+                                        updateHubList( message.hubId );
+                                        conn.send( JSON.stringify(replyMessage) );
+                                    }
+                                },
+                                cancel: {
+                                    text: '否',
+                                    action: function() {
+                                        conn.send( JSON.stringify(replyMessage) );
+                                    }
+                                }
+                            }
+                        });
                         break;
                 }
             }
@@ -257,7 +271,7 @@
                 }).fail( function( data ){
                     alert("創建使用者失敗");
                 })
-                $("#usernameSettingModal").hide();
+                $("#usernameSettingModal").modal("hide");
             }
 
             function createHub( hubname ) {
@@ -274,7 +288,7 @@
                     console.log("創建聊天室失敗");
                 })
                 $("#hubnameInput").val("");
-                $("#hubnameSettingModal").hide();
+                $("#hubnameSettingModal").modal("hide");
             }
 
             function updateHubList( hubId = 0 ) {

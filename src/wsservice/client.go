@@ -20,11 +20,19 @@ type Message struct {
 }
 
 type Client struct {
-	Id   uint32
-	Name string
-	Hubs map[uint32]bool
+	id   uint32
+	name string
+	hubs map[uint32]bool
 	conn *websocket.Conn
 	send chan Message
+}
+
+func (c *Client) GetId() uint32 {
+	return c.id
+}
+
+func (c *Client) GetName() string {
+	return c.name
 }
 
 func (c *Client) ReadPump() {
@@ -44,7 +52,7 @@ func (c *Client) ReadPump() {
 
 		var m Message
 		json.Unmarshal(message, &m)
-		fmt.Printf("%s get message %v\n", c.Name, m)
+		fmt.Printf("%s get message %v\n", c.name, m)
 		go c.HandleAction(&m)
 	}
 }
@@ -85,23 +93,23 @@ func (c *Client) WritePump() {
 func (c *Client) HandleAction(message *Message) {
 	switch message.Action {
 	case SEND: // 傳送訊息到聊天室
-		if _, isExist := c.Hubs[message.HubId]; isExist {
-			hubs[message.HubId].Broadcast <- *message
+		if _, isExist := c.hubs[message.HubId]; isExist {
+			hubs[message.HubId].broadcast <- *message
 		}
 	case INVITE:
 		clientId := message.UserId
-		message.UserId = c.Id // 將被邀請人改成邀請人
-		message.UserName = c.Name
-		message.HubName = hubs[message.HubId].Name
+		message.UserId = c.id // 將被邀請人改成邀請人
+		message.UserName = c.name
+		message.HubName = hubs[message.HubId].name
 
-		hubs[message.HubId].Inviting[clientId] = true // 被邀請人邀請中
+		hubs[message.HubId].inviting[clientId] = true // 被邀請人邀請中
 		clients[clientId].send <- *message
 	case ANSWER:
-		if hubs[message.HubId].Inviting[message.UserId] { // 答覆的人的確在聊天室邀請中
+		if hubs[message.HubId].inviting[message.UserId] { // 答覆的人的確在聊天室邀請中
 			answer, err := strconv.ParseUint(message.Content, 10, 32)
-			delete(hubs[message.HubId].Inviting, message.UserId)
+			delete(hubs[message.HubId].inviting, message.UserId)
 			if err == nil && answer == 1 {
-				hubs[message.HubId].Register <- message.UserId // 加入到聊天室中
+				hubs[message.HubId].register <- message.UserId // 加入到聊天室中
 			}
 		}
 	}

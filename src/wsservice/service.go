@@ -71,10 +71,10 @@ func ServeWs(w http.ResponseWriter, r *http.Request, id uint32) {
  * 創造使用者
  */
 func CreateClient(name string) (*Client, error) {
-	client := &Client{Id: userId, Name: name, Hubs: make(map[uint32]bool), send: make(chan Message, 256)}
+	client := &Client{id: userId, name: name, hubs: make(map[uint32]bool), send: make(chan Message, 256)}
 	clients = append(clients, client)
 	userId++
-	fmt.Printf("New User %d %s Created", client.Id, client.Name)
+	fmt.Printf("New User %d %s Created", client.id, client.name)
 	fmt.Println(clients)
 	return client, nil
 }
@@ -83,22 +83,22 @@ func CreateClient(name string) (*Client, error) {
  * 創造聊天室
  */
 func CreateHub(hubname string, creater uint32) (*Hub, error) {
-	hub := &Hub{Id: hubId,
-		Name:      hubname,
-		Clients:   make(map[uint32]bool),
-		Inviting:  make(map[uint32]bool),
-		Register:  make(chan uint32),
-		Broadcast: make(chan Message),
+	hub := &Hub{id: hubId,
+		name:      hubname,
+		clients:   make(map[uint32]bool),
+		inviting:  make(map[uint32]bool),
+		register:  make(chan uint32),
+		broadcast: make(chan Message),
 	}
 
-	hub.Clients[creater] = true
-	clients[creater].Hubs[hub.Id] = true
+	hub.clients[creater] = true
+	clients[creater].hubs[hub.id] = true
 	go hub.run()
 
 	hubs = append(hubs, hub)
 	hubId++
 
-	fmt.Printf("New Hub %d %s Created", hub.Id, hub.Name)
+	fmt.Printf("New Hub %d %s Created", hub.id, hub.name)
 	fmt.Println(hubs)
 	return hub, nil
 }

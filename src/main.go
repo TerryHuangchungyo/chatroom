@@ -30,7 +30,7 @@ func main() {
 	router.POST("/user", func(context *gin.Context) {
 		name := context.PostForm("username")
 		client, _ := wsservice.CreateClient(name)
-		context.JSON(http.StatusOK, gin.H{"id": client.Id, "username": client.Name})
+		context.JSON(http.StatusOK, gin.H{"id": client.GetId(), "username": client.GetName()})
 	})
 
 	// 新增聊天室
@@ -39,7 +39,7 @@ func main() {
 		creater := uint32(c)
 		hubname := context.PostForm("hubname")
 		hub, _ := wsservice.CreateHub(hubname, creater)
-		context.JSON(http.StatusOK, gin.H{"id": hub.Id, "hubname": hub.Name})
+		context.JSON(http.StatusOK, gin.H{"id": hub.GetId(), "hubname": hub.GetName()})
 	})
 
 	router.Run(":8080")
