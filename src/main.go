@@ -15,6 +15,13 @@ func main() {
 	// 載入要使用的HTML template
 	router.LoadHTMLGlob("view/*")
 
+	// 綁定靜態文件目錄
+	router.Static("/asset", "./asset")
+
+	router.GET("/test", func(context *gin.Context) {
+		context.HTML(http.StatusOK, "test.html", nil)
+	})
+
 	// 回傳首頁
 	router.GET("/", func(context *gin.Context) {
 		context.HTML(http.StatusOK, "index.html", nil)
