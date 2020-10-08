@@ -1,3 +1,4 @@
+// 給予Websocket伺服器的opcode
 const SEND   = 0 // 傳送訊息到聊天室
 const REPLY  = 1 // 聊天室訊息回覆
 const INVITE = 2 // 邀請加入聊天室

@@ -110,6 +110,7 @@ func (c *Client) HandleAction(message *Message) {
 			delete(hubs[message.HubId].inviting, message.UserId)
 			if err == nil && answer == 1 {
 				hubs[message.HubId].register <- message.UserId // 加入到聊天室中
+				c.hubs[message.HubId] = true                   // 新增使用者擁有的聊天室
 			}
 		}
 	}

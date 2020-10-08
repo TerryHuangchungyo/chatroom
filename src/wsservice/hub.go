@@ -33,6 +33,7 @@ func (h *Hub) run() {
 			message.UserName = clients[message.UserId].name
 			message.HubName = hubs[message.HubId].name
 			for client, _ := range h.clients {
+				// fmt.Printf("Message send to %s", clients[client].name)
 				clients[client].send <- message
 			}
 		}
