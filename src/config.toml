@@ -1,9 +1,10 @@
-[Redis]
+[redis]
 host="localhost"
 port=6479
-password=
+password=""
 
-[MySQL]
+[database]
+connection="mysql"
 host="localhost"
 port=8889
 user="root"
