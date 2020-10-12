@@ -37,6 +37,7 @@ $(document).ready(function(){
     $("#msgForm").submit( function( event ) {
         if( !conn ) {
             alert("聊天室沒有連線");
+            return false;
         } else {
             if( $("#msgInput").val() ) {
                 let message = { action: 0,
@@ -48,6 +49,7 @@ $(document).ready(function(){
                 conn.send( JSON.stringify( message ) );
                 $("#msgInput").val("");
             }
+            return false;
         }
     });
 });
