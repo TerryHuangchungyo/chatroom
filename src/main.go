@@ -29,12 +29,19 @@ func main() {
 		context.HTML(http.StatusOK, "login.html", nil)
 	})
 
+	router.POST("/login", controller.User.Login)
+
+	// 登入成功
+	router.GET("/loginSuccess", func(context *gin.Context) {
+		context.HTML(http.StatusOK, "loginSuccess.html", nil)
+	})
+
 	// 註冊
 	router.GET("/signup", func(context *gin.Context) {
 		context.HTML(http.StatusOK, "signup.html", nil)
 	})
 
-	router.POST("/signup", controller.User.Create)
+	router.POST("/signup", controller.User.Signup)
 
 	// websocket服務
 	router.GET("/chat/:id", controller.WebSocket.Serve)
