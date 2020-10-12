@@ -1,0 +1,11 @@
+[Redis]
+host="localhost"
+port=6479
+password=
+
+[MySQL]
+host="localhost"
+port=8889
+user="root"
+password="root"
+dbname="chatroom"
