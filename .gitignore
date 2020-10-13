@@ -3,3 +3,5 @@ pkg/*
 **/go.sum
 *.DS_Store
 .vscode/*
+src/log/*
+mysql/*

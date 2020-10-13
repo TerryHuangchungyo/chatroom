@@ -29,6 +29,7 @@ DROP TABLE IF EXISTS Registers;
 CREATE TABLE Registers (
     hubId varchar(30) not null,     -- 聊天室Id
     userId varchar(30) not null,    -- 使用者Id
+    type tinyint not null,          -- 身份: 0 管理員 1 一般使用者
     registerTime datetime not null, -- 加入聊天室的時間
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
     FOREIGN KEY ( userId ) REFERENCES Users( userId )
