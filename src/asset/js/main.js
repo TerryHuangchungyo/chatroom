@@ -14,7 +14,7 @@ $(document).ready(function(){
     $("#userId").text( userId )
     
     $("#hubnameCommit").click( function(){
-        $("#hubnameSettingModal").hide();
+        $("#hubnameSettingModal").modal("hide")
         createHub( $("#hubnameInput").val() )
     });
 
