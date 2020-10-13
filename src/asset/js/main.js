@@ -8,15 +8,10 @@ window.onbeforeunload = function () {
 };
 
 $(document).ready(function(){
-
-    $("#usernameSettingModal").modal("show");
-
-
-    $("#usernameCommit").click( function(){
-        $("#usernameSettingModal").hide();
-        createUser( $("#usernameInput").val() )
-        console.log( $("#usernameInput").val() );
-    });
+    let queryStr = window.location.search
+    const urlParams = new URLSearchParams( queryStr )
+    userId = urlParams.get( "userId" );
+    $("#userId").text( userId )
     
     $("#hubnameCommit").click( function(){
         $("#hubnameSettingModal").hide();
@@ -120,23 +115,6 @@ function handleMessage( message ) {
             });
             break;
     }
-}
-
-function createUser( username ) {
-    $.ajax({
-        type: "POST",
-        url: document.location.protocol + "//" + document.location.host + "/user",
-        data: { username: username }
-    }).then( function( data ){
-        userId = data["id"];
-        $("#userId").text( data["id"]);
-        $("#username").text( data["username"] );
-        createConn( userId )
-        alert("創建使用者成功");
-    }).fail( function( data ){
-        alert("創建使用者失敗");
-    })
-    $("#usernameSettingModal").modal("hide");
 }
 
 function createHub( hubname ) {

@@ -31,9 +31,14 @@ func main() {
 
 	router.POST("/login", controller.User.Login)
 
-	// 登入成功
-	router.GET("/loginSuccess", func(context *gin.Context) {
-		context.HTML(http.StatusOK, "loginSuccess.html", nil)
+	// 登入後聊天室頁面
+	router.GET("/chatroom", func(context *gin.Context) {
+		context.HTML(http.StatusOK, "chatroom2.html", nil)
+	})
+
+	// 登出
+	router.GET("/logout", func(context *gin.Context) {
+		context.Redirect(http.StatusMovedPermanently, "/login")
 	})
 
 	// 註冊

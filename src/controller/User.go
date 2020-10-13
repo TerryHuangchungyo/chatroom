@@ -65,5 +65,5 @@ func (u *UserController) Login(context *gin.Context) {
 		return
 	}
 
-	context.Redirect(http.StatusMovedPermanently, "/loginSuccess")
+	context.Redirect(http.StatusMovedPermanently, "/chatroom?userId="+userId)
 }

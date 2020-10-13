@@ -1,5 +1,5 @@
 [redis]
-host="localhost"
+host="redis"
 port=6479
 password=""
 
