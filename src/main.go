@@ -51,6 +51,9 @@ func main() {
 	// websocket服務
 	router.GET("/chat/:id", controller.WebSocket.Serve)
 
+	// 聊天室列表
+	router.GET("/hub/:userId", controller.Hub.List)
+
 	// 新增聊天室
 	router.POST("/hub", controller.Hub.Create)
 

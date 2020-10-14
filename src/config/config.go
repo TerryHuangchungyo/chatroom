@@ -2,6 +2,11 @@ package config
 
 import "github.com/BurntSushi/toml"
 
+const (
+	MEMBER_MODERATOR = iota
+	MEMBER_GENERAL
+)
+
 var DATABASE database
 var REDIS redis
 

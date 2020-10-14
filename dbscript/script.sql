@@ -2,7 +2,7 @@
 -- Author: Terry Huang
 
 DROP DATABASE IF EXISTS chatroom;
-CREATE DATABASE chatroom;
+CREATE DATABASE chatroom DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 USE chatroom;
 
 -- 創建使用者資料表
@@ -12,17 +12,17 @@ CREATE TABLE Users (
     userName varchar(64),           -- 使用者名稱
     password char(64) not null,     -- 使用者密碼
     createTime datetime not null    -- 創建的時間
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 創建聊天室資料表
 DROP TABLE IF EXISTS Hubs;
 CREATE TABLE Hubs (
     hubId int primary key auto_increment, -- 聊天室Id
     hubName varchar(64),           -- 聊天室名稱
-    userId varchar(30),            -- 創建的使用者
+    ownerId varchar(30),            -- 創建的使用者
     createTime datetime not null,  -- 創建的時間
-    FOREIGN KEY (userId) REFERENCES Users( userId )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    FOREIGN KEY (ownerId) REFERENCES Users( userId )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 創建聊天室與使用者關聯表
 DROP TABLE IF EXISTS Registers;
@@ -33,7 +33,7 @@ CREATE TABLE Registers (
     registerTime datetime not null, -- 加入聊天室的時間
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
     FOREIGN KEY ( userId ) REFERENCES Users( userId )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 創建訊息資料表
 DROP TABLE IF EXISTS Messages;
@@ -45,4 +45,4 @@ CREATE TABLE Messages (
     createTime datetime not null,   -- 發送訊息的時間
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
     FOREIGN KEY ( userId ) REFERENCES Users( userId )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

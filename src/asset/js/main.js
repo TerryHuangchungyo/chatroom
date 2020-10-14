@@ -13,6 +13,22 @@ $(document).ready(function(){
     userId = urlParams.get( "userId" );
     $("#userId").text( userId )
     
+    $.ajax({
+        url: document.location.protocol + "//" + document.location.host + "/hub/" + userId ,
+        type: "GET",
+        dataType: "json"
+    }).then( function( hubLists, textStatus, xhr ) {
+        for( hubInfo of hubLists ) {
+            let hub = new Hub( hubInfo.hubId, hubInfo.hubName );
+            hubs.set( hubInfo.hubId, hub);
+        }
+
+        if (hubLists)
+            updateHubList( hubLists[0].hubId);
+    }).fail( function( xhr, textStatus ) {
+        console.log( xhr.status + ":" + textStatus )
+    });
+
     $("#hubnameCommit").click( function(){
         $("#hubnameSettingModal").modal("hide")
         createHub( $("#hubnameInput").val() )
@@ -117,25 +133,25 @@ function handleMessage( message ) {
     }
 }
 
-function createHub( hubname ) {
+function createHub( hubName ) {
     $.ajax({
         type: "POST",
         url: document.location.protocol + "//" + document.location.host + "/hub",
-        data: { userId: userId, hubname: hubname }
-    }).then( function( data ){
-        let hubId = data["id"];
-        let hub = new Hub( data["id"], data["hubname"] );
+        data: { userId: userId, hubName: hubName }
+    }).then( function( data, textStatus, xhr ){
+        let hubId = data["hubId"];
+        let hub = new Hub( data["hubId"], data["hubName"] );
         hubs.set( hubId, hub )
         updateHubList( hubId )
-        console.log("創建聊天室成功");
-    }).fail( function( data ){
-        console.log("創建聊天室失敗");
+        console.log( xhr.status + ":" + data["msg"]);
+    }).fail( function( xhr, textStatus ){
+        console.log( xhr.status + ":" + textStatus);
     })
     $("#hubnameInput").val("");
     $("#hubnameSettingModal").modal("hide");
 }
 
-function updateHubList( hubId = 0 ) {
+function updateHubList( hubId ) {
     $("#hubList").empty();
     for( let [ id, hub ] of hubs.entries() ) {
         console.log( hub );

@@ -67,3 +67,13 @@ func (u *UserController) Login(context *gin.Context) {
 
 	context.Redirect(http.StatusMovedPermanently, "/chatroom?userId="+userId)
 }
+
+/***
+ * 登入成功之後，給予聊天室頁面
+ */
+func (u *UserController) Chatroom(context *gin.Context) {
+	userId := context.Query("userId")
+	model.Register.GetHubList(userId)
+
+	context.HTML(http.StatusOK, "chatroom2.html", nil)
+}

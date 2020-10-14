@@ -18,6 +18,7 @@ var (
 var db *sql.DB
 var User UserModel
 var Hub HubModel
+var Register RegisterModel
 
 func init() {
 	// 初始化logger 紀錄錯誤資訊
@@ -46,6 +47,7 @@ func init() {
 	// Initial Model
 	User = UserModel{"Users", db}
 	Hub = HubModel{"Hubs", db}
+	Register = RegisterModel{"Registers", db}
 }
 
 func Destroy() {
