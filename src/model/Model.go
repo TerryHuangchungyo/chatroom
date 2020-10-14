@@ -1,9 +1,9 @@
 package model
 
 import (
+	"chatroom/config"
 	"database/sql"
 	"fmt"
-	"local/config"
 	"log"
 	"os"
 

@@ -1,9 +1,9 @@
 package controller
 
 import (
+	"chatroom/config"
+	"chatroom/model"
 	"fmt"
-	"local/config"
-	"local/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"chatroom/model"
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"local/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

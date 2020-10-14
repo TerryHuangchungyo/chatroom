@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"local/wsservice"
+	"chatroom/wsservice"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

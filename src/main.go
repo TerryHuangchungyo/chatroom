@@ -1,7 +1,7 @@
 package main
 
 import (
-	"local/controller"
+	"chatroom/controller"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

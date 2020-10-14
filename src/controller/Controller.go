@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"local/model"
+	"chatroom/model"
 	"log"
 	"os"
 )
