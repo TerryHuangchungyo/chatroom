@@ -1,7 +1,8 @@
 [redis]
 host="redis"
-port=6479
+port=6379
 password=""
+db=0
 
 [database]
 connection="mysql"

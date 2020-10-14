@@ -1,4 +1,4 @@
-package wsservice
+package websocket
 
 import (
 	"encoding/json"
@@ -11,17 +11,17 @@ import (
 
 type Message struct {
 	Action   uint32 `json:"action"`   // 動作
-	UserId   uint32 `json:"userId"`   // 使用者帳號
+	UserId   string `json:"userId"`   // 使用者帳號
 	UserName string `json:"userName"` // 使用者名稱
-	HubId    uint32 `json:"hubId"`    // 聊天室ID
+	HubId    int64  `json:"hubId"`    // 聊天室ID
 	HubName  string `json:"hubName"`  // 聊天室名稱
 	Content  string `json:"content"`  // 訊息內容
 }
 
 type Client struct {
-	id   uint32          // 使用者ID
+	id   string          // 使用者ID
 	name string          // 使用者名稱
-	hubs map[uint32]bool // 使用者擁有的聊天室
+	hubs map[string]bool // 使用者擁有的聊天室
 	conn *websocket.Conn // 使用者所使用的websocket連線
 	send chan Message    // 要送給使用者的訊息
 }

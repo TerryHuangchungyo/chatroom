@@ -1,9 +1,6 @@
 package controller
 
 import (
-	"chatroom/wsservice"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,6 +9,6 @@ type WebSocketController struct {
 }
 
 func (w *WebSocketController) Serve(context *gin.Context) {
-	id, _ := strconv.ParseUint(context.Param("id"), 10, 32)
-	wsservice.ServeWs(context.Writer, context.Request, uint32(id))
+	// id, _ := strconv.ParseUint(context.Param("id"), 10, 32)
+	// websocket.ServeWs(context.Writer, context.Request, uint32(id))
 }

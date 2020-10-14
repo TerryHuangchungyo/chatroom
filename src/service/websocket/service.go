@@ -1,4 +1,4 @@
-package wsservice
+package websocket
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// 設定從客戶端最大可讀的訊息大小，以byte為基數
-	maxMessageSize = 512
+	maxMessageSize = 2048
 )
 
 var (
@@ -37,24 +37,22 @@ var (
 )
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:  2048,
+	WriteBufferSize: 2048,
 }
 
-var userId uint32
-var hubId uint32
-var clients []*Client
-var hubs []*Hub
+var clients map[string]*Client
+var hubs map[string]*Hub
 
 func init() {
-	hubId = 0
-	userId = 0
+	clients = make(map[string]*Client)
+	hubs = make(map[string]*Hub)
 }
 
 /***
  * 提供websocket服務
  */
-func ServeWs(w http.ResponseWriter, r *http.Request, id uint32) {
+func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 	conn, err := upgrader.Upgrade(w, r, nil) // 將HTTP協議升級成Websocket協議
 	if err != nil {
 		log.Println(err)
@@ -71,7 +69,7 @@ func ServeWs(w http.ResponseWriter, r *http.Request, id uint32) {
 /***
  * 創造使用者
  */
-func CreateClient(name string) (*Client, error) {
+func createClient(name string) (*Client, error) {
 	client := &Client{id: userId, name: name, hubs: make(map[uint32]bool), send: make(chan Message, 256)}
 	clients = append(clients, client)
 	userId++
@@ -83,7 +81,7 @@ func CreateClient(name string) (*Client, error) {
 /***
  * 創造聊天室
  */
-func CreateHub(hubname string, creater uint32) (*Hub, error) {
+func createHub(hubname string, creater uint32) (*Hub, error) {
 	hub := &Hub{id: hubId,
 		name:      hubname,
 		clients:   make(map[uint32]bool),

@@ -28,14 +28,24 @@ func (model *RegisterModel) Insert(hubId int64, userId string, memberType int32)
 	return nil
 }
 
-/*
+/*GetHubList ...
+描述:
 取得使用者所在的聊天室列表
 
 輸入:
-* userId: string 使用者Id
+* userId:string 使用者Id
 
 輸出:
+* hubList:
 
+	[] struct {
+		HubId   int64  `json:"hubId"`
+		HubName string `json:"hubName"`
+	}
+
+聊天室資訊列表，包含聊天室編號、聊天室名稱
+
+* err: error 回傳錯誤資訊，由外面函式決定處理方法
 */
 func (model *RegisterModel) GetHubList(userId string) (
 	[]struct {

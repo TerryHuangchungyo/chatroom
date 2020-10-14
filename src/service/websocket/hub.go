@@ -1,4 +1,4 @@
-package wsservice
+package websocket
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ type Hub struct {
 	id        uint32          // 聊天室Id
 	name      string          // 聊天室名稱
 	clients   map[uint32]bool // 聊天室有的使用者
-	inviting  map[uint32]bool // 正在邀請的使用者
-	register  chan uint32     // 等待註冊的使用者
+	inviting  map[string]bool // 正在邀請的使用者
+	register  chan string     // 等待註冊的使用者
 	broadcast chan Message    // 廣播，訊息會發給所有使用者
 }
 

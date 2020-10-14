@@ -3,7 +3,6 @@ package controller
 import (
 	"chatroom/config"
 	"chatroom/model"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -49,6 +48,5 @@ func (h *HubController) List(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, nil)
 		return
 	}
-	fmt.Println(result)
 	context.JSON(http.StatusOK, result)
 }

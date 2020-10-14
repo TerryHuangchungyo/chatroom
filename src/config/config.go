@@ -38,4 +38,5 @@ type redis struct {
 	Host     string
 	Port     int
 	Password string
+	Db       int
 }
