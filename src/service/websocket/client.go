@@ -50,6 +50,7 @@ func (c *Client) ReadPump() {
 	c.wsConn.SetPongHandler(func(string) error { c.wsConn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.wsConn.ReadMessage()
+
 		if err != nil {
 			log.Printf("Client %s %s %v", c.id, c.name, err)
 			break
@@ -91,6 +92,7 @@ func (c *Client) WritePump() {
 			}
 
 			// fmt.Printf("Client %s Get %s\n", c.name, msg.Payload)
+			c.wsConn.SetWriteDeadline(time.Now().Add(writeWait))
 			c.wsConn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
 		case <-ticker.C:
 			c.wsConn.SetWriteDeadline(time.Now().Add(writeWait))
