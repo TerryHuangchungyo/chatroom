@@ -40,11 +40,9 @@ CREATE TABLE Registers (
 DROP TABLE IF EXISTS Messages;
 CREATE TABLE Messages (
     hubId int not null,     -- 聊天室Id
-    messageId int,                  -- 訊息編號
     userId varchar(30) not null,    -- 使用者Id
     content varchar(255) not null,  -- 訊息內容
     createTime datetime not null,   -- 發送訊息的時間
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
-    FOREIGN KEY ( userId ) REFERENCES Users( userId ),
-    CONSTRAINT u_Messages_Id UNIQUE ( hubId, messageId )
+    FOREIGN KEY ( userId ) REFERENCES Users( userId )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

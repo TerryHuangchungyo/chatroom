@@ -10,7 +10,7 @@ class Hub {
         let messageBox = $("<div></div>").addClass("bg-light");
     
         switch( type ) {
-            case BROADCAST:
+            case SYSTEM:
                 messageBox.addClass("offset-4")
                         .addClass("col-4")
                         .addClass("rounded")

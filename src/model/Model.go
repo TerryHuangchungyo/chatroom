@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -19,6 +17,7 @@ var db *sql.DB
 var User UserModel
 var Hub HubModel
 var Register RegisterModel
+var Message MessageModel
 
 func init() {
 	// 初始化logger 紀錄錯誤資訊
@@ -48,6 +47,7 @@ func init() {
 	User = UserModel{"Users", db}
 	Hub = HubModel{"Hubs", db}
 	Register = RegisterModel{"Registers", db}
+	Message = MessageModel{"Messages", db}
 }
 
 func Destroy() {

@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -91,7 +90,7 @@ func (c *Client) WritePump() {
 				return
 			}
 
-			fmt.Printf("Client %s Get %s", c.name, msg.Payload)
+			// fmt.Printf("Client %s Get %s\n", c.name, msg.Payload)
 			c.wsConn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
 		case <-ticker.C:
 			c.wsConn.SetWriteDeadline(time.Now().Add(writeWait))

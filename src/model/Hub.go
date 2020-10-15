@@ -4,15 +4,16 @@ import (
 	"database/sql"
 )
 
-/**
- * 針對Hubs table 操作的 Model
- */
+/*HubModel ...
+針對聊天室資料表操作的 Model
+*/
 type HubModel struct {
 	tableName string
 	db        *sql.DB
 }
 
 /*
+描述:
 新增新的聊天室
 
 輸入:

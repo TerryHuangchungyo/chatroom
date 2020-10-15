@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"chatroom/model"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -35,10 +36,11 @@ func (h *Hub) run() {
 	for {
 		select {
 		case message := <-h.docker:
-			var unmarshalMessage *Message
+			var unmarshalMessage = &Message{}
 			json.Unmarshal(message, unmarshalMessage)
 
 			// Mysql備份
+			model.Message.Store(h.id, unmarshalMessage.UserId, &unmarshalMessage.Content)
 
 			// Publish到Redis
 			h.pub.Publish(ctx, "hub:"+strconv.FormatInt(h.id, 10), message)
