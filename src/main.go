@@ -49,7 +49,7 @@ func main() {
 	router.POST("/signup", controller.User.Signup)
 
 	// websocket服務
-	router.GET("/chat/:id", controller.WebSocket.Serve)
+	router.GET("/chat/:userId", controller.WebSocket.Serve)
 
 	// 聊天室列表
 	router.GET("/hub/:userId", controller.Hub.List)

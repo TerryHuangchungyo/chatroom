@@ -52,6 +52,7 @@ func (u *UserController) Login(context *gin.Context) {
 
 	password, err := model.User.GetPassword(userId)
 	if err != nil {
+		context.HTML(http.StatusOK, "login.html", "帳號或密碼錯誤")
 		return
 	}
 
@@ -59,7 +60,6 @@ func (u *UserController) Login(context *gin.Context) {
 	hash := sha256.New()
 	io.WriteString(hash, inputPassword)
 	inputPassword = fmt.Sprintf("%x", hash.Sum(nil))
-	fmt.Println(inputPassword)
 	if inputPassword != password {
 		context.HTML(http.StatusOK, "login.html", "帳號或密碼錯誤")
 		return

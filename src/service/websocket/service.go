@@ -1,17 +1,21 @@
 package websocket
 
 import (
-	"fmt"
+	"chatroom/config"
+	"chatroom/model"
+	"context"
 	"log"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
 )
 
 const (
-	SEND      = iota // 傳送訊息到聊天室
-	REPLY            // 聊天室訊息回覆
+	MESSAGE   = iota // 傳送訊息到聊天室
 	INVITE           // 邀請加入聊天室
 	ANSWER           // 答覆聊天室邀請
 	BROADCAST        // 系統廣播
@@ -41,12 +45,20 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 2048,
 }
 
-var clients map[string]*Client
-var hubs map[string]*Hub
+var redisOpt = redis.Options{
+	Addr:     config.REDIS.Host + ":" + strconv.FormatInt(int64(config.REDIS.Port), 10),
+	Password: config.REDIS.Password,
+	DB:       config.REDIS.Db,
+}
+
+var ctx = context.Background()
+
+var clients sync.Map
+var hubs sync.Map
 
 func init() {
-	clients = make(map[string]*Client)
-	hubs = make(map[string]*Hub)
+	clients = sync.Map{}
+	hubs = sync.Map{}
 }
 
 /***
@@ -59,45 +71,23 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 		return
 	}
 
-	client := clients[id]
-	client.conn = conn
+	var client *Client
+	if item, isExist := clients.Load(userId); isExist {
+		client = item.(*Client)
+		client.wsConn.WriteMessage(websocket.CloseMessage, []byte{})
+		client.wsConn.Close()
+		client.wsConn = conn
+	} else {
+		userName, _ := model.User.GetUserName(userId)
+		client = &Client{id: userId,
+			name:   userName,
+			wsConn: conn,
+			hubs:   make(map[int64]bool),
+			sub:    redis.NewClient(&redisOpt).PSubscribe(ctx),
+			mail:   make(chan *Message)}
+		clients.Store(userId, client)
+	}
 
 	go client.ReadPump()
 	go client.WritePump()
-}
-
-/***
- * 創造使用者
- */
-func createClient(name string) (*Client, error) {
-	client := &Client{id: userId, name: name, hubs: make(map[uint32]bool), send: make(chan Message, 256)}
-	clients = append(clients, client)
-	userId++
-	fmt.Printf("New User %d %s Created", client.id, client.name)
-	fmt.Println(clients)
-	return client, nil
-}
-
-/***
- * 創造聊天室
- */
-func createHub(hubname string, creater uint32) (*Hub, error) {
-	hub := &Hub{id: hubId,
-		name:      hubname,
-		clients:   make(map[uint32]bool),
-		inviting:  make(map[uint32]bool),
-		register:  make(chan uint32),
-		broadcast: make(chan Message),
-	}
-
-	hub.clients[creater] = true
-	clients[creater].hubs[hub.id] = true
-	go hub.run()
-
-	hubs = append(hubs, hub)
-	hubId++
-
-	fmt.Printf("New Hub %d %s Created", hub.id, hub.name)
-	fmt.Println(hubs)
-	return hub, nil
 }

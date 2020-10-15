@@ -12,7 +12,8 @@ $(document).ready(function(){
     const urlParams = new URLSearchParams( queryStr )
     userId = urlParams.get( "userId" );
     $("#userId").text( userId )
-    
+    createConn( userId )
+
     $.ajax({
         url: document.location.protocol + "//" + document.location.host + "/hub/" + userId ,
         type: "GET",
@@ -55,7 +56,7 @@ $(document).ready(function(){
                     userId: userId,
                     userName: "",
                     hubId: lastHubListItem.data("id"),
-                    hubName: "",
+                    hubName: hubs.get(lastHubListItem.data("id")).name,
                     content: $("#msgInput").val() };
                 conn.send( JSON.stringify( message ) );
                 $("#msgInput").val("");
@@ -67,7 +68,7 @@ $(document).ready(function(){
 
 function createConn( userId ) {
     if ( window["WebSocket"] ) {
-        conn = new WebSocket( "ws://" + document.location.host + "/chat/" + userId );
+        conn = new WebSocket( "ws://" + document.location.host + "/chat/" + userId  );
 
         conn.onclose = function( event ) {
             for( let [ id, hub ] of hubs.entries() ) {
@@ -89,7 +90,7 @@ function createConn( userId ) {
 
 function handleMessage( message ) {
     switch( message.action ) {
-        case REPLY:
+        case MESSAGE:
             let type = OTHER;
             if( message.userId == userId ) {
                 type = USER;

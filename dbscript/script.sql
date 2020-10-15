@@ -32,7 +32,8 @@ CREATE TABLE Registers (
     type tinyint not null,          -- 身份: 0 管理員 1 一般使用者
     registerTime datetime not null, -- 加入聊天室的時間
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
-    FOREIGN KEY ( userId ) REFERENCES Users( userId )
+    FOREIGN KEY ( userId ) REFERENCES Users( userId ),
+    CONSTRAINT u_Registers_Id UNIQUE ( hubId, userId )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 創建訊息資料表
@@ -44,5 +45,6 @@ CREATE TABLE Messages (
     content varchar(255) not null,  -- 訊息內容
     createTime datetime not null,   -- 發送訊息的時間
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
-    FOREIGN KEY ( userId ) REFERENCES Users( userId )
+    FOREIGN KEY ( userId ) REFERENCES Users( userId ),
+    CONSTRAINT u_Messages_Id UNIQUE ( hubId, messageId )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

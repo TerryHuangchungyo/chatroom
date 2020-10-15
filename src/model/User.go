@@ -28,8 +28,8 @@ func (model *UserModel) Create(userId string, userName string, password string) 
 	return nil
 }
 
-func (model *UserModel) GetPassword(userId string) (string, error) {
-	stmt, err := db.Prepare("SELECT password FROM " + model.tableName +
+func (model *UserModel) GetUserName(userId string) (string, error) {
+	stmt, err := db.Prepare("SELECT userName FROM " + model.tableName +
 		" WHERE userId = ?")
 
 	if err != nil {
@@ -47,4 +47,25 @@ func (model *UserModel) GetPassword(userId string) (string, error) {
 	}
 
 	return name, nil
+}
+
+func (model *UserModel) GetPassword(userId string) (string, error) {
+	stmt, err := db.Prepare("SELECT password FROM " + model.tableName +
+		" WHERE userId = ?")
+
+	if err != nil {
+		Error.Println(err.Error())
+		return "", err
+	}
+	defer stmt.Close()
+
+	var password string
+	err = stmt.QueryRow(userId).Scan(&password)
+
+	if err != nil {
+		Error.Println(err.Error())
+		return "", err
+	}
+
+	return password, nil
 }
