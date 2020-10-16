@@ -46,3 +46,16 @@ CREATE TABLE Messages (
     FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
     FOREIGN KEY ( userId ) REFERENCES Users( userId )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 創建邀請資料表
+DROP TABLE IF EXISTS Invites;
+CREATE TABLE Invites (
+    hubId int not null, -- 聊天室Id
+    userId varchar(30) not null, -- 使用者Id
+    invitor varchar(30) not null, -- 邀請人Id
+    createTime datetime not null, -- 發送訊息的時間
+    FOREIGN KEY ( hubId ) REFERENCES Hubs( hubId ),
+    FOREIGN KEY ( userId ) REFERENCES Users( userId ),
+    FOREIGN KEY ( invitor ) REFERENCES Users( userId ),
+    CONSTRAINT u_Invites_Id UNIQUE ( hubId, userId, invitor )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

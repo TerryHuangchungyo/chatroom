@@ -37,7 +37,7 @@ $(document).ready(function(){
 
     $("#inviteCommit").click( function(){
         let message = { action: INVITE,
-                        userId: parseInt($("#inviteInput").val()),
+                        userId: $("#inviteInput").val(),
                         userName: "",
                         hubId: lastHubListItem.data("id"),
                         hubName: "",
@@ -96,7 +96,7 @@ function handleMessage( message ) {
                 type = USER;
             }
             let hub = hubs.get( message.hubId );
-            hub.appendMessage( type, message.userName, msgCurrentTimeStr(), message.content );
+            hub.appendMessage( type, message.userName, msgTimeStrToFormat(message.time), message.content );
             break;
         case INVITE:
             let replyMessage = { action: ANSWER,
@@ -210,7 +210,11 @@ function appendMessage( type, name, time, msg ) {
 }
 
 function msgCurrentTimeStr() {
-    let str = (new Date()).toISOString().replaceAll("-","/").replace("T", " ");
+    return msgTimeStrToFormat((new Date()).toISOString());
+}
+
+function msgTimeStrToFormat( timeStr ) {
+    let str = timeStr.replaceAll("-","/").replace("T", " ");
     str = str.substr( 0, str.lastIndexOf( ":" ) );
     return str;
 }

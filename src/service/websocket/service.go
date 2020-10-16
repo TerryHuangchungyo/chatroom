@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -56,8 +57,16 @@ var ctx = context.Background()
 
 var clients sync.Map
 var hubs sync.Map
+var Log *log.Logger
 
 func init() {
+	// 初始化logger 紀錄錯誤資訊
+	logFile, err := os.OpenFile("./log/service.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	Log = log.New(logFile, "ERROR ", log.Ldate|log.Ltime|log.Lshortfile)
+
 	clients = sync.Map{}
 	hubs = sync.Map{}
 }

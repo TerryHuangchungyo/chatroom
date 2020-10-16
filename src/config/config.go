@@ -37,8 +37,10 @@ type database struct {
 }
 
 type redis struct {
-	Host     string
-	Port     int
-	Password string
-	Db       int
+	Host             string
+	Port             int
+	Password         string
+	Db               int
+	ChannelKeyPrefix string
+	HubKeyPrefix     string
 }

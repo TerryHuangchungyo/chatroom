@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"time"
 )
 
 /*MessageModel ...
@@ -23,7 +24,7 @@ type MessageModel struct {
 輸出:
 * err:error 在內部會紀錄log，回傳讓呼叫的程式看需不需要處理此種錯誤
 */
-func (model *MessageModel) Store(hubId int64, userId string, content *string) error {
+func (model *MessageModel) Store(hubId int64, userId string, content string, createTime time.Time) error {
 	stmt, err := db.Prepare("INSERT INTO " + model.tableName +
 		"( hubId, userId, content, createTime ) VALUE( ?, ?, ?, CURRENT_TIMESTAMP() )")
 
@@ -33,7 +34,7 @@ func (model *MessageModel) Store(hubId int64, userId string, content *string) er
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(hubId, userId, content)
+	_, err = stmt.Exec(hubId, userId, content, createTime)
 	if err != nil {
 		Error.Println(err.Error())
 		return err

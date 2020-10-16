@@ -47,5 +47,37 @@ func (model *HubModel) Create(hubName string, userId string) (int64, error) {
 		return -1, err
 	}
 
-	return lastInsertId, err
+	return lastInsertId, nil
+}
+
+/*
+描述:
+依據聊天室Id獲取聊天室名稱
+
+輸入:
+* hubId:string  聊天室Id
+
+輸出:
+* name:string 聊天室名稱
+* err:error   錯誤類別，讓外部的程式看需不需要處理
+*/
+func (model *HubModel) GetHubName(hubId int64) (string, error) {
+	stmt, err := db.Prepare("SELECT hubName FROM " + model.tableName +
+		" WHERE hubId = ?")
+
+	if err != nil {
+		Error.Println(err.Error())
+		return "", err
+	}
+	defer stmt.Close()
+
+	var name string
+	err = stmt.QueryRow(hubId).Scan(&name)
+
+	if err != nil {
+		Error.Println(err.Error())
+		return "", err
+	}
+
+	return name, nil
 }

@@ -20,6 +20,7 @@ var User UserModel
 var Hub HubModel
 var Register RegisterModel
 var Message MessageModel
+var Invite InviteModel
 
 func init() {
 	// 初始化logger 紀錄錯誤資訊
@@ -40,7 +41,7 @@ func init() {
 	charset := config.DATABASE.Charset
 	collation := config.DATABASE.Collation
 
-	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s", user, pass, host, port, dbname, charset, collation)
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=true", user, pass, host, port, dbname, charset, collation)
 	db, err = sql.Open(conn, dataSource)
 
 	if err != nil {
@@ -52,6 +53,7 @@ func init() {
 	Hub = HubModel{"Hubs", db}
 	Register = RegisterModel{"Registers", db}
 	Message = MessageModel{"Messages", db}
+	Invite = InviteModel{"Invites", db}
 }
 
 func Destroy() {
