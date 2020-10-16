@@ -3,6 +3,7 @@ package controller
 import (
 	"chatroom/config"
 	"chatroom/model"
+	"chatroom/service/websocket"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,14 @@ func (h *HubController) Create(context *gin.Context) {
 	}
 
 	err = model.Register.Insert(lastInsertId, userId, config.MEMBER_MODERATOR)
+	if err != nil {
+		Error.Println(err.Error())
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"msg": "Some error happend"})
+		return
+	}
+
+	err = websocket.OwnerRegist(userId, lastInsertId)
 	if err != nil {
 		Error.Println(err.Error())
 		context.JSON(http.StatusInternalServerError, gin.H{

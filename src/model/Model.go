@@ -37,8 +37,10 @@ func init() {
 	user := config.DATABASE.User
 	pass := config.DATABASE.Password
 	dbname := config.DATABASE.Dbname
+	charset := config.DATABASE.Charset
+	collation := config.DATABASE.Collation
 
-	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8", user, pass, host, port, dbname)
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s", user, pass, host, port, dbname, charset, collation)
 	db, err = sql.Open(conn, dataSource)
 
 	if err != nil {

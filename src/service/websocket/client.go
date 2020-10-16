@@ -110,7 +110,7 @@ func (c *Client) HandleAction(message []byte) {
 	var unmarshalMessage = &Message{}
 	json.Unmarshal(message, unmarshalMessage)
 
-	if _, ok := c.hubs[unmarshalMessage.HubId]; ok {
+	if _, ok := c.hubs[unmarshalMessage.HubId]; !ok {
 		return
 	}
 

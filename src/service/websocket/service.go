@@ -4,6 +4,7 @@ import (
 	"chatroom/config"
 	"chatroom/model"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -85,9 +86,36 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 			hubs:   make(map[int64]bool),
 			sub:    redis.NewClient(&redisOpt).PSubscribe(ctx),
 			mail:   make(chan *Message)}
+
+		list, err := model.Register.GetHubList(userId)
+
+		if err == nil {
+			for _, hubInfo := range list {
+				client.hubs[hubInfo.HubId] = true
+			}
+		}
+
 		clients.Store(userId, client)
 	}
 
 	go client.ReadPump()
 	go client.WritePump()
+}
+
+/*OwnerRegist ...
+描述:
+使用者創建新的聊天室必須記錄到使用者擁有的hubs中
+*/
+func OwnerRegist(userId string, hubId int64) error {
+	item, isExist := clients.Load(userId)
+
+	if isExist {
+		var client *Client
+		client = item.(*Client)
+		client.hubs[hubId] = true
+
+		return nil
+	}
+
+	return fmt.Errorf("No such client %s running", userId)
 }
