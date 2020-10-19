@@ -36,28 +36,6 @@ func (h *Hub) GetName() string {
 func (h *Hub) run() {
 	fmt.Println("Hub " + h.name + " is running")
 
-	// Refresh redis history message
-	hubId_str := strconv.FormatInt(h.id, 10)
-	historyIsExist, _ := h.redisClient.Exists(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str).Result()
-
-	if historyIsExist != 1 {
-		historyMessage, err := model.Message.GetHistoryMessages(h.id, HISTORY_SIZE)
-		if err != nil {
-			Log.Println(err.Error())
-		}
-
-		for _, msg := range historyMessage {
-			marshalMsg, err := json.Marshal(msg)
-
-			if err != nil {
-				h.redisClient.Del(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str)
-				Log.Println(err.Error())
-			}
-
-			h.redisClient.RPush(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str, marshalMsg)
-		}
-	}
-
 	for {
 		select {
 		case message, ok := <-h.docker:

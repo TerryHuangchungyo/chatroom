@@ -47,7 +47,7 @@ func (model *MessageModel) Store(hubId int64, userId string, content string, cre
 func (model *MessageModel) GetHistoryMessages(hubId int64, limit int64) ([]core.Message, error) {
 	stmt, err := db.Prepare("SELECT m.hubId, h.hubName, m.userId, u.userName, content, m.createTime FROM " + model.tableName +
 		" m JOIN " + User.tableName + " u ON m.userId = u.userId JOIN " + Hub.tableName + " h ON m.hubId = h.hubId WHERE m.hubId = ? " +
-		" ORDER BY m.createTime DESC LIMIT ?")
+		" ORDER BY m.createTime ASC LIMIT ?")
 
 	if err != nil {
 		Error.Println(err.Error())

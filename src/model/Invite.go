@@ -1,6 +1,7 @@
 package model
 
 import (
+	"chatroom/core"
 	"database/sql"
 )
 
@@ -69,14 +70,29 @@ func (model *InviteModel) CreateOrUpdate(hubId int64, userId string, invitor str
 *
 * err:error      錯誤類別，讓外部的程式看需不需要處理
 */
-func (model *InviteModel) GetInviteList(userId string) error {
-	_, err := db.Prepare("SELECT h.hubId as hubId, h.hubName as hubName,i.invitor as invitorId, u.userName as invitorName, i.createTime FROM " +
+func (model *InviteModel) GetInviteList(userId string) ([]core.Message, error) {
+	stmt, err := db.Prepare("SELECT h.hubId as hubId, h.hubName as hubName,i.invitor as invitorId, u.userName as invitorName, i.createTime FROM " +
 		model.tableName + " i JOIN " + User.tableName + " u ON i.invitor = u.userId JOIN " +
 		Hub.tableName + " h ON i.hubId = h.hubId WHERE i.userId = ?")
 
 	if err != nil {
 		Error.Println(err.Error())
-		return err
+		return nil, err
 	}
-	return err
+
+	var inviteList []core.Message
+	var inviteMessage core.Message
+
+	rows, err := stmt.Query(userId)
+	for rows.Next() {
+		err = rows.Scan(&(inviteMessage.HubId), &(inviteMessage.HubName), &(inviteMessage.UserId),
+			&(inviteMessage.UserName), &(inviteMessage.CreateTime))
+
+		if err != nil {
+			Error.Println(err.Error())
+			continue
+		}
+		inviteList = append(inviteList, inviteMessage)
+	}
+	return inviteList, nil
 }

@@ -164,10 +164,9 @@ func OwnerRegist(userId string, hubId int64) error {
 		var client *Client
 		client = item.(*Client)
 		client.hubs[hubId] = true
-
+		redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10), client.id)
 		return nil
 	}
-
 	return fmt.Errorf("No such client %s running", userId)
 }
 

@@ -59,5 +59,7 @@ func main() {
 	// 聊天室歷史訊息
 	router.GET("/history/:hubId", controller.Hub.GetHistoryMessage)
 
+	// 使用者被邀請進聊天室訊息
+	router.GET("/invite/:userId", controller.Invite.List)
 	router.Run(":8080")
 }

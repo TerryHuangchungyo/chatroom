@@ -2,6 +2,7 @@ var conn;
 var userId;
 var hubs = new Map();
 var lastHubListItem;
+var invitesCount = 0;
 
 window.onbeforeunload = function () {
     conn.close(1000);
@@ -14,7 +15,7 @@ $(document).ready(function(){
     $("#userId").text( userId )
 
     $.ajax({
-        url: document.location.protocol + "//" + document.location.host + "/hub/" + userId ,
+        url: document.location.protocol + "//" + document.location.host + "/hub/" + userId,
         type: "GET",
         dataType: "json"
     }).then( function( hubLists, textStatus, xhr ) {
@@ -30,6 +31,29 @@ $(document).ready(function(){
         console.log( xhr.status + ":" + textStatus )
     });
     
+    $.ajax({
+        url: document.location.protocol + "//" + document.location.host + "/invite/" + userId,
+        type: "GET",
+        dataType: "json"
+    }).then( function( inviteList, textStatus, xhr){
+        if (inviteList == null) {
+            return
+        }
+        for( inviteInfo of inviteList ) {
+            let dataRow = $("<tr></tr>");
+            $("<td></td>").text( msgTimeStrToFormat(inviteInfo.time) ).appendTo( dataRow );
+            $("<td></td>").text( `${inviteInfo.userName} 邀請你加入 ${inviteInfo.hubName} 聊天室` ).appendTo( dataRow );
+            $("<td class='text-right'></td>").html( "<a class='text-success'>接受</a>|<a class='text-danger'>拒絕</a>")
+                                            .appendTo( dataRow);
+            
+            $("#inviteList").append( dataRow);
+            invitesCount++;
+        }
+        $("#inviteCount").text( invitesCount)
+    }).fail( function( xhr, textStatus) {
+        console.log( xhr.status + ":" + textStatus )
+    }) 
+
     createConn( userId )
 
     $("#hubnameCommit").click( function(){
@@ -101,37 +125,15 @@ function handleMessage( message ) {
             hub.appendMessage( type, message.userName, msgTimeStrToFormat(message.time), message.content );
             break;
         case INVITE:
-            let replyMessage = { action: ANSWER,
-                                userId: userId,
-                                userName: "",
-                                hubId: message.hubId,
-                                hubName: "",
-                                content: "0" };
+            let dataRow = $("<tr></tr>");
+            $("<td></td>").text( msgTimeStrToFormat(message.time) ).appendTo( dataRow );
+            $("<td></td>").text( `${message.userName} 邀請你加入 ${message.hubName} 聊天室` ).appendTo( dataRow );
+            $("<td class='text-right'></td>").html( "<a class='text-success'>接受</a>|<a class='text-danger'>拒絕</a>")
+                                            .appendTo( dataRow);
             
-            $.confirm({
-                title: '聊天室邀請',
-                content: `${message.userName} 邀請你加入 ${message.hubName} 聊天室`,
-                buttons: {
-                    confirm: {
-                        text: '是',
-                        btnClass: 'btn-green',
-                        keys: ['enter'],
-                        action: function() {
-                            replyMessage.content = "1";
-                            let hub = new Hub( message.hubId, message.hubName );
-                            hubs.set( message.hubId, hub);
-                            updateHubList( message.hubId );
-                            conn.send( JSON.stringify(replyMessage) );
-                        }
-                    },
-                    cancel: {
-                        text: '否',
-                        action: function() {
-                            conn.send( JSON.stringify(replyMessage) );
-                        }
-                    }
-                }
-            });
+            $("#inviteList").append( dataRow);
+            invitesCount++;
+            $("#inviteCount").text( invitesCount)
             break;
     }
 }

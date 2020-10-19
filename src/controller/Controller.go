@@ -16,6 +16,7 @@ var (
 var User UserController
 var Hub HubController
 var WebSocket WebSocketController
+var Invite InviteController
 
 func init() {
 	// 初始化logger 紀錄錯誤資訊
@@ -30,6 +31,7 @@ func init() {
 	User = UserController{}
 	Hub = HubController{}
 	WebSocket = WebSocketController{}
+	Invite = InviteController{}
 }
 
 func Destroy() {

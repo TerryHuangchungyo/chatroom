@@ -143,6 +143,7 @@ func (c *Client) HandleAction(message []byte) {
 		hub.docker <- unmarshalMessage
 	case INVITE:
 		clientId := unmarshalMessage.UserId
+		unmarshalMessage.CreateTime = time.Now()
 
 		_, err := model.User.GetUserName(clientId)
 		if err != nil { // 沒有該使用者
