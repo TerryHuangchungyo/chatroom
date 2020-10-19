@@ -1,6 +1,7 @@
 package model
 
 import (
+	"chatroom/core"
 	"database/sql"
 	"time"
 )
@@ -26,7 +27,7 @@ type MessageModel struct {
 */
 func (model *MessageModel) Store(hubId int64, userId string, content string, createTime time.Time) error {
 	stmt, err := db.Prepare("INSERT INTO " + model.tableName +
-		"( hubId, userId, content, createTime ) VALUE( ?, ?, ?, CURRENT_TIMESTAMP() )")
+		"( hubId, userId, content, createTime ) VALUE( ?, ?, ?, ? )")
 
 	if err != nil {
 		Error.Println(err.Error())
@@ -41,4 +42,36 @@ func (model *MessageModel) Store(hubId int64, userId string, content string, cre
 	}
 
 	return nil
+}
+
+func (model *MessageModel) GetHistoryMessages(hubId int64, limit int64) ([]core.Message, error) {
+	stmt, err := db.Prepare("SELECT m.hubId, h.hubName, m.userId, u.userName, content, m.createTime FROM " + model.tableName +
+		" m JOIN " + User.tableName + " u ON m.userId = u.userId JOIN " + Hub.tableName + " h ON m.hubId = h.hubId WHERE m.hubId = ? " +
+		" ORDER BY m.createTime DESC LIMIT ?")
+
+	if err != nil {
+		Error.Println(err.Error())
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(hubId, limit)
+	if err != nil {
+		Error.Println(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var message core.Message
+	var messageList []core.Message
+
+	for rows.Next() {
+		if err = rows.Scan(&(message.HubId), &(message.HubName), &(message.UserId), &(message.UserName), &(message.Content), &(message.CreateTime)); err != nil {
+			Error.Println(err)
+			return nil, err
+		}
+		message.Action = 0
+		messageList = append(messageList, message)
+	}
+	return messageList, nil
 }

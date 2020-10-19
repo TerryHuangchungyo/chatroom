@@ -4,7 +4,7 @@ port=6379
 password=""
 db=0
 channelKeyPrefix="chan:"
-hubKeyPrefix="hub:"
+hubHistoryKeyPrefix="hub_history:"
 
 [database]
 connection="mysql"

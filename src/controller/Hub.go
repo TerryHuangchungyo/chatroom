@@ -5,6 +5,7 @@ import (
 	"chatroom/model"
 	"chatroom/service/websocket"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -57,5 +58,13 @@ func (h *HubController) List(context *gin.Context) {
 		context.JSON(http.StatusInternalServerError, nil)
 		return
 	}
+	context.JSON(http.StatusOK, result)
+}
+
+func (h *HubController) GetHistoryMessage(context *gin.Context) {
+	hubId, _ := strconv.ParseInt(context.Param("hubId"), 10, 64)
+
+	result, _ := websocket.GetHubHistoryMessage(hubId)
+
 	context.JSON(http.StatusOK, result)
 }

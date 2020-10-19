@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"chatroom/config"
+	"chatroom/core"
 	"chatroom/model"
 	"encoding/json"
 	"log"
@@ -12,23 +13,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Message struct {
-	Action     uint32    `json:"action"`   // 動作
-	UserId     string    `json:"userId"`   // 使用者帳號
-	UserName   string    `json:"userName"` // 使用者名稱
-	HubId      int64     `json:"hubId"`    // 聊天室ID
-	HubName    string    `json:"hubName"`  // 聊天室名稱
-	Content    string    `json:"content"`  // 訊息內容
-	CreateTime time.Time `json:"time"`
-}
-
 type Client struct {
-	id     string          // 使用者ID
-	name   string          // 使用者名稱
-	hubs   map[int64]bool  // 使用者擁有的聊天室
-	wsConn *websocket.Conn // 使用者所使用的websocket連線
-	sub    *redis.PubSub   // 訂閱redis，連線的客戶端
-	mail   chan *Message   // 要送給使用者操作的訊息，像是邀請加入聊天室
+	id     string             // 使用者ID
+	name   string             // 使用者名稱
+	hubs   map[int64]bool     // 使用者擁有的聊天室
+	wsConn *websocket.Conn    // 使用者所使用的websocket連線
+	sub    *redis.PubSub      // 訂閱redis，連線的客戶端
+	mail   chan *core.Message // 要送給使用者操作的訊息，像是邀請加入聊天室
 }
 
 func (c *Client) GetId() string {
@@ -110,7 +101,7 @@ func (c *Client) WritePump() {
  * 根據message的action code來處理封包
  */
 func (c *Client) HandleAction(message []byte) {
-	var unmarshalMessage = &Message{}
+	var unmarshalMessage = &core.Message{}
 	json.Unmarshal(message, unmarshalMessage)
 
 	if _, ok := c.hubs[unmarshalMessage.HubId]; !ok {
@@ -141,7 +132,7 @@ func (c *Client) HandleAction(message []byte) {
 			hub = &Hub{unmarshalMessage.HubId,
 				unmarshalMessage.HubName,
 				redis.NewClient(&redisOpt),
-				make(chan *Message, 64)}
+				make(chan *core.Message, 64)}
 
 			go hub.run() // 運行Hub
 			hubs.Store(hub.id, hub)
@@ -157,6 +148,7 @@ func (c *Client) HandleAction(message []byte) {
 			return
 		}
 
+		// 將邀請的訊息紀錄在Mysql資料庫中
 		err = model.Invite.CreateOrUpdate(unmarshalMessage.HubId, unmarshalMessage.UserId, c.id)
 		if err != nil { // 邀請失敗
 			return

@@ -57,5 +57,8 @@ func main() {
 	// 新增聊天室
 	router.POST("/hub", controller.Hub.Create)
 
+	// 聊天室歷史訊息
+	router.GET("/history/:hubId", controller.Hub.GetHistoryMessage)
+
 	router.Run(":8080")
 }

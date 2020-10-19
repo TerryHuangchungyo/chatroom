@@ -12,7 +12,6 @@ $(document).ready(function(){
     const urlParams = new URLSearchParams( queryStr )
     userId = urlParams.get( "userId" );
     $("#userId").text( userId )
-    createConn( userId )
 
     $.ajax({
         url: document.location.protocol + "//" + document.location.host + "/hub/" + userId ,
@@ -22,6 +21,7 @@ $(document).ready(function(){
         for( hubInfo of hubLists ) {
             let hub = new Hub( hubInfo.hubId, hubInfo.hubName );
             hubs.set( hubInfo.hubId, hub);
+            refreshHubHistoryMsg( hubInfo.hubId, hub );
         }
 
         if (hubLists)
@@ -29,6 +29,8 @@ $(document).ready(function(){
     }).fail( function( xhr, textStatus ) {
         console.log( xhr.status + ":" + textStatus )
     });
+    
+    createConn( userId )
 
     $("#hubnameCommit").click( function(){
         $("#hubnameSettingModal").modal("hide")
@@ -179,6 +181,22 @@ function updateHubList( hubId ) {
             $("#dialog-container").html( hub.dialog );
         })                
     }
+}
+
+function refreshHubHistoryMsg( hubId, hub ) {
+    $.ajax({
+        type: "GET",
+        url: document.location.protocol + "//" + document.location.host + "/history/" + hubId,
+    }).then( function( historyMessages, textStatus, xhr){
+        for( message of historyMessages ) {
+            let type = USER;
+            if( message.userId != userId )
+                type = OTHER;
+            hub.appendMessage( type, message.userName, msgTimeStrToFormat( message.time), message.content);
+        }
+    }).fail( function( xhr, textStatus ){
+        console.log( `Load Hub:${hubId} messages failed in function refreshHubHistoryMsg.`);
+    })
 }
 
     

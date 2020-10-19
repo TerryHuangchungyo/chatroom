@@ -2,8 +2,10 @@ package websocket
 
 import (
 	"chatroom/config"
+	"chatroom/core"
 	"chatroom/model"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -36,6 +38,8 @@ const (
 	// 設定從客戶端最大可讀的訊息大小，以byte為基數
 	maxMessageSize = 2048
 )
+
+const HISTORY_SIZE = 50
 
 var (
 	newline = []byte{'\n'}
@@ -94,7 +98,7 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 			wsConn: conn,
 			hubs:   make(map[int64]bool),
 			sub:    redis.NewClient(&redisOpt).PSubscribe(ctx),
-			mail:   make(chan *Message)}
+			mail:   make(chan *core.Message)}
 
 		list, err := model.Register.GetHubList(userId)
 
@@ -127,4 +131,47 @@ func OwnerRegist(userId string, hubId int64) error {
 	}
 
 	return fmt.Errorf("No such client %s running", userId)
+}
+
+/*GetHubHistoryMessage ...
+描述：
+獲取聊天室歷史訊息
+*/
+func GetHubHistoryMessage(hubId int64) ([]core.Message, error) {
+	// 從Redis獲取歷史訊息，如果沒有就從資料庫抓取,並寫入redis
+	var redisClient = redis.NewClient(&redisOpt)
+
+	hubId_str := strconv.FormatInt(hubId, 10)
+	historyIsExist, _ := redisClient.Exists(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str).Result()
+	var historyMessage []core.Message
+
+	if historyIsExist == 1 {
+		marshalMessageList, _ := redisClient.LRange(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str, 0, -1).Result()
+
+		for _, marshalMessage := range marshalMessageList {
+			var msg core.Message
+			json.Unmarshal([]byte(marshalMessage), &msg)
+			historyMessage = append(historyMessage, msg)
+		}
+	} else {
+		var err error
+		historyMessage, err = model.Message.GetHistoryMessages(hubId, HISTORY_SIZE)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, msg := range historyMessage {
+			marshalMsg, err := json.Marshal(msg)
+
+			if err != nil {
+				redisClient.Del(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str)
+				return nil, err
+			}
+
+			redisClient.RPush(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str, marshalMsg)
+		}
+	}
+
+	return historyMessage, nil
 }

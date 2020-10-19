@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"chatroom/config"
+	"chatroom/core"
 	"chatroom/model"
 	"encoding/json"
 	"fmt"
@@ -12,10 +13,10 @@ import (
 )
 
 type Hub struct {
-	id     int64         // 聊天室Id
-	name   string        // 聊天室名稱
-	pub    *redis.Client // 連線redis的client
-	docker chan *Message // 訊息接收的channel，之後會publish到redis跟mysql備份
+	id          int64              // 聊天室Id
+	name        string             // 聊天室名稱
+	redisClient *redis.Client      // 連線redis的client
+	docker      chan *core.Message // 訊息接收的channel，之後會publish到redis跟mysql備份
 }
 
 func (h *Hub) GetId() int64 {
@@ -34,6 +35,29 @@ func (h *Hub) GetName() string {
  */
 func (h *Hub) run() {
 	fmt.Println("Hub " + h.name + " is running")
+
+	// Refresh redis history message
+	hubId_str := strconv.FormatInt(h.id, 10)
+	historyIsExist, _ := h.redisClient.Exists(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str).Result()
+
+	if historyIsExist != 1 {
+		historyMessage, err := model.Message.GetHistoryMessages(h.id, HISTORY_SIZE)
+		if err != nil {
+			Log.Println(err.Error())
+		}
+
+		for _, msg := range historyMessage {
+			marshalMsg, err := json.Marshal(msg)
+
+			if err != nil {
+				h.redisClient.Del(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str)
+				Log.Println(err.Error())
+			}
+
+			h.redisClient.RPush(ctx, config.REDIS.HubHistoryKeyPrefix+hubId_str, marshalMsg)
+		}
+	}
+
 	for {
 		select {
 		case message := <-h.docker:
@@ -46,11 +70,22 @@ func (h *Hub) run() {
 			}
 
 			// Mysql備份
-			err = model.Message.Store(h.id, message.UserId, message.Conten, message.CreateTime)
+			err = model.Message.Store(h.id, message.UserId, message.Content, message.CreateTime)
+
+			// 房間編號整數型態轉換成字串
+			hubId := strconv.FormatInt(h.id, 10)
 
 			// Publish到Redis
-			if err == nil {
-				h.pub.Publish(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(h.id, 10), marshalMessage)
+			if err != nil {
+				return
+			}
+
+			h.redisClient.Publish(ctx, config.REDIS.ChannelKeyPrefix+hubId, marshalMessage)
+			h.redisClient.RPush(ctx, config.REDIS.HubHistoryKeyPrefix+hubId, marshalMessage)
+
+			listLength, _ := h.redisClient.LLen(ctx, config.REDIS.HubHistoryKeyPrefix+hubId).Result()
+			if listLength > HISTORY_SIZE {
+				h.redisClient.LPop(ctx, config.REDIS.HubHistoryKeyPrefix+hubId)
 			}
 		}
 	}
