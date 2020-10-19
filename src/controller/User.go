@@ -2,6 +2,7 @@ package controller
 
 import (
 	"chatroom/model"
+	"chatroom/service/websocket"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -69,11 +70,10 @@ func (u *UserController) Login(context *gin.Context) {
 }
 
 /***
- * 登入成功之後，給予聊天室頁面
+ * 登出，將service client刪除，終止client所執行的goroutines
  */
-func (u *UserController) Chatroom(context *gin.Context) {
-	userId := context.Query("userId")
-	model.Register.GetHubList(userId)
-
-	context.HTML(http.StatusOK, "chatroom2.html", nil)
+func (u *UserController) Logout(context *gin.Context) {
+	userId := context.Param("userId")
+	websocket.Destroy(userId)
+	context.Redirect(http.StatusFound, "/login")
 }

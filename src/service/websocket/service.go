@@ -62,6 +62,7 @@ var ctx = context.Background()
 var clients sync.Map
 var hubs sync.Map
 var Log *log.Logger
+var redisClient *redis.Client
 
 func init() {
 	// 初始化logger 紀錄錯誤資訊
@@ -73,6 +74,7 @@ func init() {
 
 	clients = sync.Map{}
 	hubs = sync.Map{}
+	redisClient = redis.NewClient(&redisOpt)
 }
 
 /***
@@ -105,14 +107,50 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 		if err == nil {
 			for _, hubInfo := range list {
 				client.hubs[hubInfo.HubId] = true
+				userCnt, err := redisClient.SCard(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10)).Result()
+				redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10), client.id)
+
+				if err != nil {
+					Log.Println(err.Error())
+				}
+
+				if userCnt == 0 {
+					var hub *Hub
+					if _, isExist := hubs.Load(hubInfo.HubId); !isExist {
+						hub = &Hub{hubInfo.HubId,
+							hubInfo.HubName,
+							redis.NewClient(&redisOpt),
+							make(chan *core.Message, 64),
+						}
+
+						go hub.run() // 運行Hub
+						hubs.Store(hub.id, hub)
+						client.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hub.id, 10))
+					}
+				}
 			}
 		}
 
 		clients.Store(userId, client)
+		redisClient.SAdd(ctx, config.REDIS.UserAliveSet, client.id)
 	}
 
 	go client.ReadPump()
 	go client.WritePump()
+}
+
+/*Destroy ...
+關閉客戶端Client，將使用者Id從Redis移除，並檢查是否有Hub(聊天室人數為0)需要被關閉
+*/
+func Destroy(userId string) {
+	item, isExist := clients.Load(userId)
+
+	if isExist {
+		clients.Delete(userId)
+		client := item.(*Client)
+		client.Destroy()
+	}
+	redisClient.SRem(ctx, config.REDIS.UserAliveSet, userId)
 }
 
 /*OwnerRegist ...

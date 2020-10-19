@@ -60,7 +60,10 @@ func (h *Hub) run() {
 
 	for {
 		select {
-		case message := <-h.docker:
+		case message, ok := <-h.docker:
+			if !ok {
+				return
+			}
 			message.CreateTime = time.Now()
 
 			marshalMessage, err := json.Marshal(message)
@@ -89,4 +92,13 @@ func (h *Hub) run() {
 			}
 		}
 	}
+}
+
+/* Destroy ...
+描述:
+關閉Hub所擁有的資源
+*/
+func (h *Hub) Destroy() {
+	h.redisClient.Close()
+	close(h.docker)
 }

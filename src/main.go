@@ -33,13 +33,12 @@ func main() {
 
 	// 登入後聊天室頁面
 	router.GET("/chatroom", func(context *gin.Context) {
-		context.HTML(http.StatusOK, "chatroom2.html", nil)
+		userId := context.Query("userId")
+		context.HTML(http.StatusOK, "chatroom2.html", gin.H{"userId": userId})
 	})
 
 	// 登出
-	router.GET("/logout", func(context *gin.Context) {
-		context.Redirect(http.StatusMovedPermanently, "/login")
-	})
+	router.GET("/logout/:userId", controller.User.Logout)
 
 	// 註冊
 	router.GET("/signup", func(context *gin.Context) {

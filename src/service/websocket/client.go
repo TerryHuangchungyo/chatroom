@@ -132,7 +132,8 @@ func (c *Client) HandleAction(message []byte) {
 			hub = &Hub{unmarshalMessage.HubId,
 				unmarshalMessage.HubName,
 				redis.NewClient(&redisOpt),
-				make(chan *core.Message, 64)}
+				make(chan *core.Message, 64),
+			}
 
 			go hub.run() // 運行Hub
 			hubs.Store(hub.id, hub)
@@ -168,5 +169,32 @@ func (c *Client) HandleAction(message []byte) {
 		// 			c.hubs[unmarshalMessage.HubId] = true                                      // 新增使用者擁有的聊天室
 		// 		}
 		// 	}
+	}
+}
+
+func (client *Client) Destroy() {
+	close(client.mail)
+	client.sub.Close()
+	client.wsConn.Close()
+
+	// 從redis聊天室擁有的使用者移除，如果聊天室人數為零就從map移出，並釋放聊天室所擁有的資源
+	for hubId, _ := range client.hubs {
+		redisClient.SRem(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10), client.id)
+		userCnt, err := redisClient.SCard(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10)).Result()
+		if err != nil {
+			Log.Println(err.Error())
+			continue
+		}
+
+		if userCnt != 0 {
+			continue
+		}
+
+		item, isExist := hubs.Load(hubId)
+		if isExist {
+			hubs.Delete(hubId)
+			hub := item.(*Hub)
+			hub.Destroy()
+		}
 	}
 }

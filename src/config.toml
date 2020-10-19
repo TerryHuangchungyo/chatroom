@@ -5,6 +5,8 @@ password=""
 db=0
 channelKeyPrefix="chan:"
 hubHistoryKeyPrefix="hub_history:"
+hubUsersSetKeyPrefix="hub_users:"
+userAliveSet="user_alive"
 
 [database]
 connection="mysql"
