@@ -67,7 +67,7 @@ func (model *InviteModel) CreateOrUpdate(hubId int64, userId string, invitor str
 * userId:string  使用者Id
 
 輸出:
-*
+* inviteList: []core.Message 邀請使用者的清單
 * err:error      錯誤類別，讓外部的程式看需不需要處理
 */
 func (model *InviteModel) GetInviteList(userId string) ([]core.Message, error) {
@@ -95,4 +95,36 @@ func (model *InviteModel) GetInviteList(userId string) ([]core.Message, error) {
 		inviteList = append(inviteList, inviteMessage)
 	}
 	return inviteList, nil
+}
+
+func (model *InviteModel) DeleteInviteFromHub(hubId int64, userId string) error {
+	stmt, err := db.Prepare("DELETE FROM " + model.tableName + " WHERE hubId = ? AND userId = ?;")
+
+	if err != nil {
+		Error.Println(err.Error())
+		return err
+	}
+
+	_, err = stmt.Exec(hubId, userId)
+	if err != nil {
+		Error.Println(err.Error())
+	}
+
+	return err
+}
+
+func (model *InviteModel) DeleteInvite(hubId int64, userId string, invitor string) error {
+	stmt, err := db.Prepare("DELETE FROM " + model.tableName + " WHERE hubId = ? AND userId = ? AND invitor = ?;")
+
+	if err != nil {
+		Error.Println(err.Error())
+		return err
+	}
+
+	_, err = stmt.Exec(hubId, userId, invitor)
+	if err != nil {
+		Error.Println(err.Error())
+	}
+
+	return err
 }

@@ -44,7 +44,6 @@ func (c *Client) ReadPump() {
 	c.wsConn.SetPongHandler(func(string) error { c.wsConn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.wsConn.ReadMessage()
-
 		if err != nil {
 			log.Printf("Client %s %s %v", c.id, c.name, err)
 			break
@@ -104,10 +103,6 @@ func (c *Client) HandleAction(message []byte) {
 	var unmarshalMessage = &core.Message{}
 	json.Unmarshal(message, unmarshalMessage)
 
-	if _, ok := c.hubs[unmarshalMessage.HubId]; !ok {
-		return
-	}
-
 	// 如果訊息的使用者名稱沒有的話，補上
 	if unmarshalMessage.UserName == "" {
 		unmarshalMessage.UserName = c.name
@@ -123,21 +118,15 @@ func (c *Client) HandleAction(message []byte) {
 
 	switch unmarshalMessage.Action {
 	case MESSAGE: // 傳送訊息到Hub，讓Hub備份訊息到Mysql並publish到redis
+		if _, ok := c.hubs[unmarshalMessage.HubId]; !ok {
+			return
+		}
+
 		var hub *Hub
 		if item, isExist := hubs.Load(unmarshalMessage.HubId); isExist {
 			hub = item.(*Hub)
 		} else {
-			// check mysql databases whether exists such hub
-
-			hub = &Hub{unmarshalMessage.HubId,
-				unmarshalMessage.HubName,
-				redis.NewClient(&redisOpt),
-				make(chan *core.Message, 64),
-			}
-
-			go hub.run() // 運行Hub
-			hubs.Store(hub.id, hub)
-			c.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hub.id, 10))
+			hub = CreateHub(unmarshalMessage.HubId)
 		}
 
 		hub.docker <- unmarshalMessage
@@ -161,15 +150,22 @@ func (c *Client) HandleAction(message []byte) {
 			unmarshalMessage.UserId = c.id // 將被邀請人改成邀請人
 			item.(*Client).mail <- unmarshalMessage
 		}
-		// case ANSWER:
-		// 	if hub.inviting[unmarshalMessage.UserId] { // 答覆的人的確在聊天室邀請中
-		// 		answer, err := strconv.ParseUint(unmarshalMessage.Content, 10, 32)
-		// 		delete(hub.inviting, unmarshalMessage.UserId)
-		// 		if err == nil && answer == 1 {
-		// 			c.sub.Subscribe(ctx, "hub:"+strconv.FormatInt(unmarshalMessage.HubId, 10)) // 訂閱此聊天室的redis頻道
-		// 			c.hubs[unmarshalMessage.HubId] = true                                      // 新增使用者擁有的聊天室
-		// 		}
-		// 	}
+	case ANSWER:
+
+		// 到Mysql檢查使用者的確有在邀請名單中
+		answer, err := strconv.ParseUint(unmarshalMessage.Content, 10, 32)
+
+		if err == nil {
+			if answer == 1 {
+				model.Invite.DeleteInviteFromHub(unmarshalMessage.HubId, c.id)
+				model.Register.Insert(unmarshalMessage.HubId, unmarshalMessage.UserId, config.MEMBER_GENERAL)
+				redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(unmarshalMessage.HubId, 10), c.id)
+				c.hubs[unmarshalMessage.HubId] = true // 新增使用者擁有的聊天室
+				c.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(unmarshalMessage.HubId, 10))
+			} else {
+				model.Invite.DeleteInvite(unmarshalMessage.HubId, unmarshalMessage.UserId, c.id)
+			}
+		}
 	}
 }
 

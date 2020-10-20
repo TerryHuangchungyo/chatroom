@@ -34,7 +34,7 @@ func main() {
 	// 登入後聊天室頁面
 	router.GET("/chatroom", func(context *gin.Context) {
 		userId := context.Query("userId")
-		context.HTML(http.StatusOK, "chatroom2.html", gin.H{"userId": userId})
+		context.HTML(http.StatusOK, "chatroom.html", gin.H{"userId": userId})
 	})
 
 	// 登出

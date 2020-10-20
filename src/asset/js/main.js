@@ -3,6 +3,7 @@ var userId;
 var hubs = new Map();
 var lastHubListItem;
 var invitesCount = 0;
+var invitesList = [];
 
 window.onbeforeunload = function () {
     conn.close(1000);
@@ -28,33 +29,11 @@ $(document).ready(function(){
         if (hubLists)
             updateHubList( hubLists[0].hubId);
     }).fail( function( xhr, textStatus ) {
-        console.log( xhr.status + ":" + textStatus )
+        console.log( xhr.status + ":" + textStatus );
     });
-    
-    $.ajax({
-        url: document.location.protocol + "//" + document.location.host + "/invite/" + userId,
-        type: "GET",
-        dataType: "json"
-    }).then( function( inviteList, textStatus, xhr){
-        if (inviteList == null) {
-            return
-        }
-        for( inviteInfo of inviteList ) {
-            let dataRow = $("<tr></tr>");
-            $("<td></td>").text( msgTimeStrToFormat(inviteInfo.time) ).appendTo( dataRow );
-            $("<td></td>").text( `${inviteInfo.userName} 邀請你加入 ${inviteInfo.hubName} 聊天室` ).appendTo( dataRow );
-            $("<td class='text-right'></td>").html( "<a class='text-success'>接受</a>|<a class='text-danger'>拒絕</a>")
-                                            .appendTo( dataRow);
-            
-            $("#inviteList").append( dataRow);
-            invitesCount++;
-        }
-        $("#inviteCount").text( invitesCount)
-    }).fail( function( xhr, textStatus) {
-        console.log( xhr.status + ":" + textStatus )
-    }) 
 
-    createConn( userId )
+    updateInviteBox();
+    createConn( userId );
 
     $("#hubnameCommit").click( function(){
         $("#hubnameSettingModal").modal("hide")
@@ -114,6 +93,92 @@ function createConn( userId ) {
     }
 }
 
+function updateInviteBox() {
+    $.ajax({
+        url: document.location.protocol + "//" + document.location.host + "/invite/" + userId,
+        type: "GET",
+        dataType: "json"
+    }).then( function( inviteMsgs, textStatus, xhr){
+        if (inviteMsgs == null) {
+            return;
+        }
+
+        $("#inviteList").empty();
+        invitesCount = 0;
+
+        for( inviteInfo of inviteMsgs ) {
+            console.log( inviteInfo )
+            let dataRow = $("<tr></tr>");
+            $("<td></td>").text( msgTimeStrToFormat(inviteInfo.time) ).appendTo( dataRow );
+            $("<td></td>").text( `${inviteInfo.userName} 邀請你加入 ${inviteInfo.hubName} 聊天室` ).appendTo( dataRow );
+
+            let accept = $("<a class='text-success'>接受</a>");
+            let reject = $("<a class='text-danger'>拒絕</a>")
+            $("<td class='text-right'></td>").append( accept )
+                                            .append( "|" )
+                                            .append( reject )
+                                            .appendTo( dataRow );
+            
+            let acceptHandler = function() {
+                let index = $("#inviteList tr").index($(this).closest("tr"));
+                $(this).closest("tr").remove();
+
+                let  inviteMsg = invitesList[ index ];
+                if ( !conn )
+                    return;
+                
+                let answer = {
+                    action: ANSWER,
+                    hubId: inviteMsg.hubId,
+                    hubName: inviteMsg.hubName,
+                    userId: userId,
+                    userName: "",
+                    content: "1"
+                }
+
+                answer.content = "1";
+                let hubId = inviteMsg.hubId;
+                let hub = new Hub( hubId, inviteMsg.hubName );
+                conn.send( JSON.stringify( answer));
+                refreshHubHistoryMsg( hubId, hub );
+                updateHubList( hubId );
+                updateInviteBox();
+            }
+
+            let rejectHandler = function () {
+                let index = $("#inviteList tr").index($(this).closest("tr"));
+                $(this).closest("tr").remove();
+                let  inviteMsg = invitesList[ index ];
+
+                if ( !conn )
+                    return;
+
+                let answer = {
+                    action: ANSWER,
+                    hubId: inviteMsg.hubId,
+                    hubName: inviteMsg.hubName,
+                    userId: userId,
+                    userName: "",
+                    content: "0"
+                }
+
+                conn.send( JSON.stringify( answer));
+                updateInviteBox();
+            }
+
+            accept.click( acceptHandler );
+            reject.click( rejectHandler ); 
+
+            $("#inviteList").append( dataRow );
+            invitesList.push( inviteInfo )
+            invitesCount++;
+        }
+        $("#inviteCount").text( invitesCount );
+    }).fail( function( xhr, textStatus) {
+        console.log( xhr.status + ":" + textStatus )
+    })
+}
+
 function handleMessage( message ) {
     switch( message.action ) {
         case MESSAGE:
@@ -125,15 +190,7 @@ function handleMessage( message ) {
             hub.appendMessage( type, message.userName, msgTimeStrToFormat(message.time), message.content );
             break;
         case INVITE:
-            let dataRow = $("<tr></tr>");
-            $("<td></td>").text( msgTimeStrToFormat(message.time) ).appendTo( dataRow );
-            $("<td></td>").text( `${message.userName} 邀請你加入 ${message.hubName} 聊天室` ).appendTo( dataRow );
-            $("<td class='text-right'></td>").html( "<a class='text-success'>接受</a>|<a class='text-danger'>拒絕</a>")
-                                            .appendTo( dataRow);
-            
-            $("#inviteList").append( dataRow);
-            invitesCount++;
-            $("#inviteCount").text( invitesCount)
+            updateInviteBox();
             break;
     }
 }

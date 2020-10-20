@@ -107,27 +107,9 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 		if err == nil {
 			for _, hubInfo := range list {
 				client.hubs[hubInfo.HubId] = true
-				userCnt, err := redisClient.SCard(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10)).Result()
+				CreateHub(hubInfo.HubId)
 				redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10), client.id)
-
-				if err != nil {
-					Log.Println(err.Error())
-				}
-
-				if userCnt == 0 {
-					var hub *Hub
-					if _, isExist := hubs.Load(hubInfo.HubId); !isExist {
-						hub = &Hub{hubInfo.HubId,
-							hubInfo.HubName,
-							redis.NewClient(&redisOpt),
-							make(chan *core.Message, 64),
-						}
-
-						go hub.run() // 運行Hub
-						hubs.Store(hub.id, hub)
-						client.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hub.id, 10))
-					}
-				}
+				client.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10))
 			}
 		}
 
@@ -137,6 +119,34 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 
 	go client.ReadPump()
 	go client.WritePump()
+}
+
+/*Create Hub ...
+創建一個Hub，並運行
+*/
+func CreateHub(hubId int64) *Hub {
+	var hub *Hub
+	item, isExist := hubs.Load(hubId)
+	if isExist == false {
+		hubName, err := model.Hub.GetHubName(hubId)
+		if err != nil {
+			Log.Println(err.Error())
+			return nil
+		}
+
+		hub = &Hub{hubId,
+			hubName,
+			redis.NewClient(&redisOpt),
+			make(chan *core.Message, 64),
+		}
+
+		go hub.run() // 運行Hub
+		hubs.Store(hub.id, hub)
+		return hub
+	}
+
+	hub = item.(*Hub)
+	return hub
 }
 
 /*Destroy ...
@@ -164,7 +174,8 @@ func OwnerRegist(userId string, hubId int64) error {
 		var client *Client
 		client = item.(*Client)
 		client.hubs[hubId] = true
-		redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10), client.id)
+		redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10), userId)
+		client.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hubId, 10))
 		return nil
 	}
 	return fmt.Errorf("No such client %s running", userId)
