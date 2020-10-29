@@ -2,11 +2,14 @@ package model
 
 import (
 	"chatroom/config"
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
+	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -15,12 +18,21 @@ var (
 	Warning *log.Logger
 	Error   *log.Logger
 )
+
+var redisOpt = redis.Options{
+	Addr:     config.REDIS.Host + ":" + strconv.FormatInt(int64(config.REDIS.Port), 10),
+	Password: config.REDIS.Password,
+	DB:       config.REDIS.Db,
+}
+
 var db *sql.DB
 var User UserModel
 var Hub HubModel
 var Register RegisterModel
 var Message MessageModel
 var Invite InviteModel
+var redisClient *redis.Client
+var ctx = context.Background()
 
 func init() {
 	// 初始化logger 紀錄錯誤資訊
@@ -32,6 +44,7 @@ func init() {
 	Warning = log.New(os.Stderr, "Warning ", log.Ldate|log.Ltime|log.Lshortfile)
 	Error = log.New(logFile, "Error ", log.Ldate|log.Ltime|log.Lshortfile)
 
+	// 資料庫連線
 	conn := config.DATABASE.Connection
 	host := config.DATABASE.Host
 	port := config.DATABASE.Port
@@ -47,6 +60,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// redis 連線
+	redisClient = redis.NewClient(&redisOpt)
 
 	// Initial Model
 	User = UserModel{"Users", db}

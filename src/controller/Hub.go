@@ -61,6 +61,14 @@ func (h *HubController) List(context *gin.Context) {
 	context.JSON(http.StatusOK, result)
 }
 
+func (h *HubController) UserList(context *gin.Context) {
+	hubId, _ := strconv.ParseInt(context.Param("hubId"), 10, 64)
+
+	result, _ := model.Register.GetUserListByHubId(hubId)
+
+	context.JSON(http.StatusOK, result)
+}
+
 func (h *HubController) GetHistoryMessage(context *gin.Context) {
 	hubId, _ := strconv.ParseInt(context.Param("hubId"), 10, 64)
 

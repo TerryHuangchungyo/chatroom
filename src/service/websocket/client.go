@@ -176,6 +176,7 @@ func (client *Client) Destroy() {
 
 	// 從redis聊天室擁有的使用者移除，如果聊天室人數為零就從map移出，並釋放聊天室所擁有的資源
 	for hubId, _ := range client.hubs {
+		item, isExist := hubs.Load(hubId)
 		redisClient.SRem(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10), client.id)
 		userCnt, err := redisClient.SCard(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10)).Result()
 		if err != nil {
@@ -187,7 +188,6 @@ func (client *Client) Destroy() {
 			continue
 		}
 
-		item, isExist := hubs.Load(hubId)
 		if isExist {
 			hubs.Delete(hubId)
 			hub := item.(*Hub)

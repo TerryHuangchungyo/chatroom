@@ -1,7 +1,9 @@
 package model
 
 import (
+	"chatroom/config"
 	"database/sql"
+	"strconv"
 )
 
 /*RegisterModel ...
@@ -100,4 +102,71 @@ func (model *RegisterModel) GetHubList(userId string) (
 		hubList = append(hubList, hubInfo)
 	}
 	return hubList, nil
+}
+
+func (model *RegisterModel) GetUserListByHubId(hubId int64) (
+	[]struct {
+		UserId   string `json:"userId"`
+		UserName string `json:"userName"`
+		Active   bool   `json:"active"`
+	}, error) {
+
+	// get alive userid in redis
+	aliveUserIdSet := make(map[string]bool)
+
+	redisStrSliceCmd := redisClient.SMembers(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10))
+	aliveUserIdList, err := redisStrSliceCmd.Result()
+	if err != nil {
+		Error.Println(err.Error())
+		return nil, err
+	}
+
+	for _, aliveUserId := range aliveUserIdList {
+		aliveUserIdSet[aliveUserId] = true
+	}
+
+	// get user list by hubId
+	stmt, err := db.Prepare("SELECT r.userId, u.userName FROM " + model.tableName +
+		" r JOIN " + User.tableName + " u ON r.userId = u.userId WHERE r.hubId = ?")
+
+	if err != nil {
+		Error.Println(err.Error())
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(hubId)
+	if err != nil {
+		Error.Println(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var userList []struct {
+		UserId   string `json:"userId"`
+		UserName string `json:"userName"`
+		Active   bool   `json:"active"`
+	}
+
+	for rows.Next() {
+		var userInfo struct {
+			UserId   string `json:"userId"`
+			UserName string `json:"userName"`
+			Active   bool   `json:"active"`
+		}
+
+		if err = rows.Scan(&(userInfo.UserId), &(userInfo.UserName)); err != nil {
+			Error.Println(err)
+			return nil, err
+		}
+
+		if _, isExist := aliveUserIdSet[userInfo.UserId]; isExist {
+			userInfo.Active = true
+		} else {
+			userInfo.Active = false
+		}
+
+		userList = append(userList, userInfo)
+	}
+	return userList, nil
 }
