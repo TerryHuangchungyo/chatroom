@@ -45,8 +45,8 @@ class Hub {
         for( let userInfo of userList ) {
             let userInfoUI = $("<li class='list-group-item'></li>");
             let badge = $("<div class='badge text-wrap'></div>").appendTo( userInfoUI );
-            let userIdUI = $("<span class='bg-info'></span>").appendTo( userInfoUI );
-            let userNameUI = $("<span></span>").appendTo( userInfoUI );
+            let userIdUI = $("<span class='bg-info ml-1'></span>").appendTo( userInfoUI );
+            let userNameUI = $("<span class='ml-1'></span>").appendTo( userInfoUI );
 
             userIdUI.text( userInfo.userId );
             userNameUI.text( userInfo.userName );
@@ -69,8 +69,8 @@ class Hub {
 
         userInfoUI.empty();
         let badge = $("<div class='badge badge-success text-wrap'></div>").appendTo( userInfoUI );
-        let userIdUI = $("<span class='bg-info'></span>").appendTo( userInfoUI );
-        let userNameUI = $("<span></span>").appendTo( userInfoUI );
+        let userIdUI = $("<span class='bg-info ml-1'></span>").appendTo( userInfoUI );
+        let userNameUI = $("<span class='ml-1'></span>").appendTo( userInfoUI );
         
         badge.addClass("badge-success").text("上線中");
     
@@ -86,8 +86,8 @@ class Hub {
 
         userInfoUI.empty();
         let badge = $("<div class='badge badge-secondary text-wrap'></div>").appendTo( userInfoUI );
-        let userIdUI = $("<span class='bg-info'></span>").appendTo( userInfoUI );
-        let userNameUI = $("<span></span>").appendTo( userInfoUI );
+        let userIdUI = $("<span class='bg-info ml-1'></span>").appendTo( userInfoUI );
+        let userNameUI = $("<span class='ml-1'></span>").appendTo( userInfoUI );
         
         badge.addClass("badge-secondary").text("已離線");
     
