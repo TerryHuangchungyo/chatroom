@@ -5,6 +5,7 @@ import (
 	"chatroom/core"
 	"chatroom/model"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -174,21 +175,38 @@ func (client *Client) Destroy() {
 	client.sub.Close()
 	client.wsConn.Close()
 
+	offlineMsg := core.Message{
+		Action:     USER_OFFLINE,
+		UserId:     client.id,
+		UserName:   client.name,
+		HubName:    "",
+		Content:    "",
+		CreateTime: time.Now(),
+	}
+
 	// 從redis聊天室擁有的使用者移除，如果聊天室人數為零就從map移出，並釋放聊天室所擁有的資源
 	for hubId, _ := range client.hubs {
 		item, isExist := hubs.Load(hubId)
 		redisClient.SRem(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10), client.id)
 		userCnt, err := redisClient.SCard(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubId, 10)).Result()
+
 		if err != nil {
 			Log.Println(err.Error())
 			continue
 		}
 
-		if userCnt != 0 {
-			continue
+		fmt.Println(hubId)
+		offlineMsg.HubId = hubId
+		fmt.Println(offlineMsg)
+		marshalMsg, err := json.Marshal(&offlineMsg)
+
+		if err != nil {
+			Log.Println(err.Error())
+		} else {
+			redisClient.Publish(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hubId, 10), marshalMsg)
 		}
 
-		if isExist {
+		if userCnt == 0 && isExist {
 			hubs.Delete(hubId)
 			hub := item.(*Hub)
 			hub.Destroy()

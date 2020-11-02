@@ -24,6 +24,7 @@ $(document).ready(function(){
             let hub = new Hub( hubInfo.hubId, hubInfo.hubName );
             hubs.set( hubInfo.hubId, hub);
             refreshHubHistoryMsg( hubInfo.hubId, hub );
+            refreshOnlineUser( hubInfo.hubId, hub );
         }
 
         if (hubLists)
@@ -180,17 +181,27 @@ function updateInviteBox() {
 }
 
 function handleMessage( message ) {
+    let hub;
+    let type;
     switch( message.action ) {
         case MESSAGE:
-            let type = OTHER;
+            type = OTHER;
             if( message.userId == userId ) {
                 type = USER;
             }
-            let hub = hubs.get( message.hubId );
+            hub = hubs.get( message.hubId );
             hub.appendMessage( type, message.userName, msgTimeStrToFormat(message.time), message.content );
             break;
         case INVITE:
             updateInviteBox();
+            break;
+        case USER_ONLINE:
+            hub = hubs.get( message.hubId );
+            hub.userOnline( message.userId, message.userName );
+            break;
+        case USER_OFFLINE:
+            hub = hubs.get( message.hubId );
+            hub.userOffline( message.userId, message.userName );
             break;
     }
 }
@@ -228,6 +239,7 @@ function updateHubList( hubId ) {
             $("#hubName").text( lastHubListItem.text() );
             $("#hubId").text( String(lastHubListItem.data("id")).padStart( 12, "0") );
             $("#dialog-container").html( hub.dialog );
+            $("#userListUIContainer").html( hub.aliveUserListUI );
         }
 
         list.click( function(){
@@ -238,6 +250,7 @@ function updateHubList( hubId ) {
             $("#hubId").text( String(lastHubListItem.data("id")).padStart( 12, "0") );
             let hub = hubs.get( lastHubListItem.data("id") );
             $("#dialog-container").html( hub.dialog );
+            $("#userListUIContainer").html( hub.aliveUserListUI );
         })                
     }
 }
@@ -258,7 +271,18 @@ function refreshHubHistoryMsg( hubId, hub ) {
     })
 }
 
-    
+function refreshOnlineUser( hubId, hub ) {
+    $.ajax({
+        type: "GET",
+        url: document.location.protocol + "//" + document.location.host + "/member/" + hubId,
+    }).then( function( userList, textStatus, xhr){
+        console.log( userList );
+        hub.updateAliveUserList( userList );
+    }).fail( function( xhr, textStatus ){
+        console.log( `Load Hub:${hubId} userList failed in function refreshOnlineUser.`);
+    })
+}
+
 function appendMessage( type, name, time, msg ) {
     let messageBox = $("<div></div>").addClass("bg-light");
 
@@ -278,7 +302,12 @@ function appendMessage( type, name, time, msg ) {
             break;
     }
     
-    messageBox.html( `<small>${name} ${time}</small><div>${msg}</div>`);
+    var urlPattern = /(http|https):\/\/(\w+\.)+\w+\/?/g;
+    var urlReplaceStr = str.replaceAll( urlPattern, function replacer( match ) {
+        return `<a href="${match}">${match}</a>`;
+    });
+
+    messageBox.html( `<small>${name} ${time}</small><div>${urlReplaceStr}</div>`);
 
     let wrapper = $("<div></div>").addClass("row")
                                 .addClass("mt-2")

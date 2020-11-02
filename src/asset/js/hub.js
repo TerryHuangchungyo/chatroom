@@ -3,7 +3,7 @@ class Hub {
         this.id = id;
         this.name = name;
         this.aliveUser = new Map();
-        this.aliveUserList = $("<ul class='list-group'></ul>");
+        this.aliveUserListUI = $("<ul class='list-group'></ul>");
         let dialog = $("<div style='overflow-y:auto;' class='p-2 rounded bg-white h-100'></div>");
         this.dialog = dialog;
     }
@@ -26,8 +26,12 @@ class Hub {
                         .addClass("col-4");
                 break;
         }
-        
-        messageBox.html( `<small>${name} ${time}</small><div>${msg}</div>`);
+
+        var urlReplaceStr = msg.replaceAll( urlPattern, function replacer( match ) {
+            return `<a href="${match}" target="_blank">${match}</a>`;
+        });
+
+        messageBox.html( `<small>${name} ${time}</small><div>${urlReplaceStr}</div>`);
     
         let wrapper = $("<div></div>").addClass("row")
                                     .addClass("mt-2")
@@ -40,19 +44,22 @@ class Hub {
     updateAliveUserList( userList ) {
         for( let userInfo of userList ) {
             let userInfoUI = $("<li class='list-group-item'></li>");
-            let badge = $("<div class='badge badge-success text-wrap'></div>").appendTo( userInfoUI );
-            let userIdUI = $("<span></span>").appendTo( userInfoUI );
+            let badge = $("<div class='badge text-wrap'></div>").appendTo( userInfoUI );
+            let userIdUI = $("<span class='bg-info'></span>").appendTo( userInfoUI );
             let userNameUI = $("<span></span>").appendTo( userInfoUI );
 
-            if ( userInfo.active ) {
-                badge.addClass("badge-success").text("上線中");
-            } else {
-                badge.addClass("badge-secondary").text("已離線");
-            }
             userIdUI.text( userInfo.userId );
             userNameUI.text( userInfo.userName );
 
             this.aliveUser.set( userInfo.userId, userInfoUI );
+
+            if ( userInfo.active ) {
+                badge.addClass("badge-success").text("上線中");
+                this.aliveUserListUI.prepend( userInfoUI );
+            } else {
+                badge.addClass("badge-secondary").text("已離線");
+                this.aliveUserListUI.append( userInfoUI );
+            }
         }
         
     }
@@ -62,7 +69,7 @@ class Hub {
 
         userInfoUI.empty();
         let badge = $("<div class='badge badge-success text-wrap'></div>").appendTo( userInfoUI );
-        let userIdUI = $("<span></span>").appendTo( userInfoUI );
+        let userIdUI = $("<span class='bg-info'></span>").appendTo( userInfoUI );
         let userNameUI = $("<span></span>").appendTo( userInfoUI );
         
         badge.addClass("badge-success").text("上線中");
@@ -70,8 +77,8 @@ class Hub {
         userIdUI.text( userId );
         userNameUI.text( userName );
 
-        this.aliveUserList.remove( userInfoUI );
-        this.aliveUserList.prepend( userInfoUI );
+        this.aliveUserListUI.remove( userInfoUI );
+        this.aliveUserListUI.prepend( userInfoUI );
     }
 
     userOffline( userId, userName ) {
@@ -79,7 +86,7 @@ class Hub {
 
         userInfoUI.empty();
         let badge = $("<div class='badge badge-secondary text-wrap'></div>").appendTo( userInfoUI );
-        let userIdUI = $("<span></span>").appendTo( userInfoUI );
+        let userIdUI = $("<span class='bg-info'></span>").appendTo( userInfoUI );
         let userNameUI = $("<span></span>").appendTo( userInfoUI );
         
         badge.addClass("badge-secondary").text("已離線");
@@ -87,7 +94,7 @@ class Hub {
         userIdUI.text( userId );
         userNameUI.text( userName );
 
-        this.aliveUserList.remove( userInfoUI );
-        this.aliveUserList.append( userInfoUI );
+        this.aliveUserListUI.remove( userInfoUI );
+        this.aliveUserListUI.append( userInfoUI );
     }
 }

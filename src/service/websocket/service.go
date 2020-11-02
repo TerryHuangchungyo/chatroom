@@ -19,10 +19,13 @@ import (
 )
 
 const (
-	MESSAGE   = iota // 傳送訊息到聊天室
-	INVITE           // 邀請加入聊天室
-	ANSWER           // 答覆聊天室邀請
-	BROADCAST        // 系統廣播
+	MESSAGE      = iota // 傳送訊息到聊天室
+	INVITE              // 邀請加入聊天室
+	ANSWER              // 答覆聊天室邀請
+	BROADCAST           // 系統廣播
+	USER_ONLINE         // 使用者上線
+	USER_OFFLINE        // 使用者下線
+	ADD_USER            // 新使用者加入聊天室
 )
 
 const (
@@ -105,9 +108,29 @@ func Serve(w http.ResponseWriter, r *http.Request, userId string) {
 		list, err := model.Register.GetHubList(userId)
 
 		if err == nil {
+			onlineMsg := core.Message{
+				Action:     USER_ONLINE,
+				UserId:     client.id,
+				UserName:   client.name,
+				Content:    "",
+				CreateTime: time.Now(),
+			}
+
 			for _, hubInfo := range list {
 				client.hubs[hubInfo.HubId] = true
 				CreateHub(hubInfo.HubId)
+
+				onlineMsg.HubId = hubInfo.HubId
+				onlineMsg.HubName = hubInfo.HubName
+
+				var marshalMsg, err = json.Marshal(&onlineMsg)
+
+				if err != nil {
+					Log.Println(err.Error())
+				} else {
+					redisClient.Publish(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10), marshalMsg)
+				}
+
 				redisClient.SAdd(ctx, config.REDIS.HubUsersSetKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10), client.id)
 				client.sub.PSubscribe(ctx, config.REDIS.ChannelKeyPrefix+strconv.FormatInt(hubInfo.HubId, 10))
 			}
