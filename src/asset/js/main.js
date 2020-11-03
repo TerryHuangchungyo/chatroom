@@ -24,7 +24,7 @@ $(document).ready(function(){
             let hub = new Hub( hubInfo.hubId, hubInfo.hubName );
             hubs.set( hubInfo.hubId, hub);
             refreshHubHistoryMsg( hubInfo.hubId, hub );
-            refreshOnlineUser( hubInfo.hubId, hub );
+            setTimeout(refreshOnlineUser, 1000, hubInfo.hubId, hub );
         }
 
         if (hubLists)
@@ -216,6 +216,7 @@ function createHub( hubName ) {
         let hub = new Hub( data["hubId"], data["hubName"] );
         hubs.set( hubId, hub )
         updateHubList( hubId )
+        setTimeout( refreshOnlineUser, 3000, hubId, hub );
         console.log( xhr.status + ":" + data["msg"]);
     }).fail( function( xhr, textStatus ){
         console.log( xhr.status + ":" + textStatus);
