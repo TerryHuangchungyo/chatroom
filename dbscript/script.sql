@@ -59,3 +59,8 @@ CREATE TABLE Invites (
     FOREIGN KEY ( invitor ) REFERENCES Users( userId ),
     CONSTRAINT u_Invites_Id UNIQUE ( hubId, userId, invitor )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 創建系統廣播資料表
+create table Broadcasts ( id int PRIMARY AUTO_INCREMENT,
+                         content varchar(255) not null,
+                         createTime datetime );

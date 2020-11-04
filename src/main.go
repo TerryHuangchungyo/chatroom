@@ -64,5 +64,17 @@ func main() {
 
 	// 使用者被邀請進聊天室訊息
 	router.GET("/invite/:userId", controller.Invite.List)
+
+	// 廣播管理
+	router.GET("/admin/broadcast", func(context *gin.Context) {
+		context.HTML(http.StatusOK, "broadcast.html", nil)
+	})
+
+	// 廣播新增
+
+	// 廣播編輯
+
+	// 廣播刪除
+
 	router.Run(":8080")
 }
